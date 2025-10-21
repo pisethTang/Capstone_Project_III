@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/sething2002/Capstone_Project/Capstone_Project_III/main.cpp" "CMakeFiles/GeodesicVisualizer.dir/main.cpp.o" "gcc" "CMakeFiles/GeodesicVisualizer.dir/main.cpp.o.d"
+  "/home/sething2002/Capstone_Project/Capstone_Project_III/main.cpp" "CMakeFiles/DemoODE.dir/main.cpp.o" "gcc" "CMakeFiles/DemoODE.dir/main.cpp.o.d"
   )
 
 # Targets to which this target links.

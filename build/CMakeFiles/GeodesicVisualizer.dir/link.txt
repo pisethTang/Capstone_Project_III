@@ -1,1 +1,0 @@
-/usr/bin/g++ -g CMakeFiles/GeodesicVisualizer.dir/main.cpp.o -o GeodesicVisualizer 

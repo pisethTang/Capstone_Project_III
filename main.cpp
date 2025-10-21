@@ -1,18 +1,61 @@
+// generates a trajectory on the Lorenz attractor. 
+
+
+#include <boost/numeric/odeint/integrate/integrate.hpp>
 #include <iostream>
-#include <Eigen/Dense> // This is the include path within the Eigen library
+#include <fstream>
 
-int main()
-{
-    Eigen::Matrix3d m; // A 3x3 matrix of doubles
-    m << 1, 2, 3,
-         4, 5, 6,
-         7, 8, 9;
+#include <boost/array.hpp>
+#include <boost/numeric/odeint.hpp>
 
-    Eigen::Vector3d v(1, 2, 3);
+// internal 
+using namespace std;
+// 3rd party 
+using namespace boost::numeric::odeint;
 
-    std::cout << "Matrix m:\n" << m << std::endl;
-    std::cout << "\nVector v:\n" << v << std::endl;
-    std::cout << "\nMatrix * Vector:\n" << m * v << std::endl;
 
+
+
+const double sigma = 10.0;
+const double R = 28.0;
+const double b = 8.0/3.0;
+
+typedef boost::array<double, 3> state_type;
+
+void lorenz(const state_type &x, state_type& dxdt, double t){
+    dxdt[0] = sigma * (x[1] - x[0]);
+    dxdt[1] = R * x[0] - x[1] - x[0] * x[2];
+    dxdt[2] = -b * x[2] + x[0] * x[1];
+}
+
+
+
+std::ofstream data_file("lorenz.dat");
+void write_lorenz(const state_type& x, const double t){
+    // cout << t << "\t" << x[0] << "\t" << x[1] << "\t" << x[2] << endl;
+    data_file << t << "\t" << x[0] << "\t" << x[1] << "\t" << x[2] << endl;
+}
+
+
+
+
+
+
+int main(int argc, char** argv){
+    // ensures file is open 
+    if (!data_file.is_open()){
+        std::cerr << "Error: could not open lorenz.dat for writing" << "\n";
+        return 1;
+    }
+    // cout << "BUILT, COMPILED AND EXECUTED SUCCESSFULLY WITH CMAKE!" << endl;
+    state_type x = {10.0, 1.0, 1.0}; // initial conditions 
+    integrate(lorenz, 
+            x, 
+            0.0, 
+            25.0, 
+            0.1, 
+            write_lorenz);
+
+    data_file.close();
     return 0;
 }

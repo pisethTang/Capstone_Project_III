@@ -63,7 +63,7 @@ CMAKE_BINARY_DIR = /home/sething2002/Capstone_Project/Capstone_Project_III/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/GeodesicVisualizer.dir/all
+all: CMakeFiles/DemoODE.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,34 +71,34 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/GeodesicVisualizer.dir/clean
+clean: CMakeFiles/DemoODE.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/GeodesicVisualizer.dir
+# Target rules for target CMakeFiles/DemoODE.dir
 
 # All Build rule for target.
-CMakeFiles/GeodesicVisualizer.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/GeodesicVisualizer.dir/build.make CMakeFiles/GeodesicVisualizer.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/GeodesicVisualizer.dir/build.make CMakeFiles/GeodesicVisualizer.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles --progress-num=1,2 "Built target GeodesicVisualizer"
-.PHONY : CMakeFiles/GeodesicVisualizer.dir/all
+CMakeFiles/DemoODE.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles --progress-num=1,2 "Built target DemoODE"
+.PHONY : CMakeFiles/DemoODE.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/GeodesicVisualizer.dir/rule: cmake_check_build_system
+CMakeFiles/DemoODE.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/GeodesicVisualizer.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/DemoODE.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles 0
-.PHONY : CMakeFiles/GeodesicVisualizer.dir/rule
+.PHONY : CMakeFiles/DemoODE.dir/rule
 
 # Convenience name for target.
-GeodesicVisualizer: CMakeFiles/GeodesicVisualizer.dir/rule
-.PHONY : GeodesicVisualizer
+DemoODE: CMakeFiles/DemoODE.dir/rule
+.PHONY : DemoODE
 
 # clean rule for target.
-CMakeFiles/GeodesicVisualizer.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/GeodesicVisualizer.dir/build.make CMakeFiles/GeodesicVisualizer.dir/clean
-.PHONY : CMakeFiles/GeodesicVisualizer.dir/clean
+CMakeFiles/DemoODE.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/clean
+.PHONY : CMakeFiles/DemoODE.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.
