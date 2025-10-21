@@ -117,24 +117,37 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named DemoODE
+# Target rules for targets named LorenzDemo
 
 # Build rule for target.
-DemoODE: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 DemoODE
-.PHONY : DemoODE
+LorenzDemo: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 LorenzDemo
+.PHONY : LorenzDemo
 
 # fast build rule for target.
-DemoODE/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/build
-.PHONY : DemoODE/fast
+LorenzDemo/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LorenzDemo.dir/build.make CMakeFiles/LorenzDemo.dir/build
+.PHONY : LorenzDemo/fast
+
+#=============================================================================
+# Target rules for targets named SimpleODEDemo
+
+# Build rule for target.
+SimpleODEDemo: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 SimpleODEDemo
+.PHONY : SimpleODEDemo
+
+# fast build rule for target.
+SimpleODEDemo/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SimpleODEDemo.dir/build.make CMakeFiles/SimpleODEDemo.dir/build
+.PHONY : SimpleODEDemo/fast
 
 main.o: main.cpp.o
 .PHONY : main.o
 
 # target to build an object file
 main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LorenzDemo.dir/build.make CMakeFiles/LorenzDemo.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -142,7 +155,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LorenzDemo.dir/build.make CMakeFiles/LorenzDemo.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -150,8 +163,32 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LorenzDemo.dir/build.make CMakeFiles/LorenzDemo.dir/main.cpp.s
 .PHONY : main.cpp.s
+
+simple_ode.o: simple_ode.cpp.o
+.PHONY : simple_ode.o
+
+# target to build an object file
+simple_ode.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SimpleODEDemo.dir/build.make CMakeFiles/SimpleODEDemo.dir/simple_ode.cpp.o
+.PHONY : simple_ode.cpp.o
+
+simple_ode.i: simple_ode.cpp.i
+.PHONY : simple_ode.i
+
+# target to preprocess a source file
+simple_ode.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SimpleODEDemo.dir/build.make CMakeFiles/SimpleODEDemo.dir/simple_ode.cpp.i
+.PHONY : simple_ode.cpp.i
+
+simple_ode.s: simple_ode.cpp.s
+.PHONY : simple_ode.s
+
+# target to generate assembly for a file
+simple_ode.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SimpleODEDemo.dir/build.make CMakeFiles/SimpleODEDemo.dir/simple_ode.cpp.s
+.PHONY : simple_ode.cpp.s
 
 # Help Target
 help:
@@ -161,10 +198,14 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... DemoODE"
+	@echo "... LorenzDemo"
+	@echo "... SimpleODEDemo"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... simple_ode.o"
+	@echo "... simple_ode.i"
+	@echo "... simple_ode.s"
 .PHONY : help
 
 

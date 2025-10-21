@@ -63,7 +63,8 @@ CMAKE_BINARY_DIR = /home/sething2002/Capstone_Project/Capstone_Project_III/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/DemoODE.dir/all
+all: CMakeFiles/LorenzDemo.dir/all
+all: CMakeFiles/SimpleODEDemo.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,34 +72,61 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/DemoODE.dir/clean
+clean: CMakeFiles/LorenzDemo.dir/clean
+clean: CMakeFiles/SimpleODEDemo.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/DemoODE.dir
+# Target rules for target CMakeFiles/LorenzDemo.dir
 
 # All Build rule for target.
-CMakeFiles/DemoODE.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles --progress-num=1,2 "Built target DemoODE"
-.PHONY : CMakeFiles/DemoODE.dir/all
+CMakeFiles/LorenzDemo.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LorenzDemo.dir/build.make CMakeFiles/LorenzDemo.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LorenzDemo.dir/build.make CMakeFiles/LorenzDemo.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles --progress-num=1,2 "Built target LorenzDemo"
+.PHONY : CMakeFiles/LorenzDemo.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/DemoODE.dir/rule: cmake_check_build_system
+CMakeFiles/LorenzDemo.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/DemoODE.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/LorenzDemo.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles 0
-.PHONY : CMakeFiles/DemoODE.dir/rule
+.PHONY : CMakeFiles/LorenzDemo.dir/rule
 
 # Convenience name for target.
-DemoODE: CMakeFiles/DemoODE.dir/rule
-.PHONY : DemoODE
+LorenzDemo: CMakeFiles/LorenzDemo.dir/rule
+.PHONY : LorenzDemo
 
 # clean rule for target.
-CMakeFiles/DemoODE.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/DemoODE.dir/build.make CMakeFiles/DemoODE.dir/clean
-.PHONY : CMakeFiles/DemoODE.dir/clean
+CMakeFiles/LorenzDemo.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LorenzDemo.dir/build.make CMakeFiles/LorenzDemo.dir/clean
+.PHONY : CMakeFiles/LorenzDemo.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/SimpleODEDemo.dir
+
+# All Build rule for target.
+CMakeFiles/SimpleODEDemo.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SimpleODEDemo.dir/build.make CMakeFiles/SimpleODEDemo.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SimpleODEDemo.dir/build.make CMakeFiles/SimpleODEDemo.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles --progress-num=3,4 "Built target SimpleODEDemo"
+.PHONY : CMakeFiles/SimpleODEDemo.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/SimpleODEDemo.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/SimpleODEDemo.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles 0
+.PHONY : CMakeFiles/SimpleODEDemo.dir/rule
+
+# Convenience name for target.
+SimpleODEDemo: CMakeFiles/SimpleODEDemo.dir/rule
+.PHONY : SimpleODEDemo
+
+# clean rule for target.
+CMakeFiles/SimpleODEDemo.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SimpleODEDemo.dir/build.make CMakeFiles/SimpleODEDemo.dir/clean
+.PHONY : CMakeFiles/SimpleODEDemo.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

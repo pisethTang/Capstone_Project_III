@@ -151,7 +151,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=DemoODE
+CMAKE_PROJECT_NAME:STATIC=OdeExamples
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -223,6 +223,15 @@ DemoODE_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 DemoODE_SOURCE_DIR:STATIC=/home/sething2002/Capstone_Project/Capstone_Project_III
+
+//Value Computed by CMake
+OdeExamples_BINARY_DIR:STATIC=/home/sething2002/Capstone_Project/Capstone_Project_III/build
+
+//Value Computed by CMake
+OdeExamples_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+OdeExamples_SOURCE_DIR:STATIC=/home/sething2002/Capstone_Project/Capstone_Project_III
 
 //The directory containing a CMake configuration file for boost_headers.
 boost_headers_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_headers-1.74.0
