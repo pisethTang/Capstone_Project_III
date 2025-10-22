@@ -1,4 +1,0 @@
-/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles/LorenzDemo.dir
-/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles/SimpleODEDemo.dir
-/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles/edit_cache.dir
-/home/sething2002/Capstone_Project/Capstone_Project_III/build/CMakeFiles/rebuild_cache.dir
