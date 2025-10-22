@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/sething2002/Capstone_Project/Capstone_Project_III/build",
+  "command": "/usr/bin/g++  -isystem /usr/include/eigen3 -g -std=gnu++17 -o CMakeFiles/main-intro.dir/main-intro.cpp.o -c /home/sething2002/Capstone_Project/Capstone_Project_III/main-intro.cpp",
+  "file": "/home/sething2002/Capstone_Project/Capstone_Project_III/main-intro.cpp"
+}
+]
