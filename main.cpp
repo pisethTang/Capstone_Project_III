@@ -1,5 +1,5 @@
 #include <iostream>
-#include <Eigen/Dense> // This is the include path within the Eigen library
+#include <eigen3/Eigen/Dense>
 
 int main()
 {
