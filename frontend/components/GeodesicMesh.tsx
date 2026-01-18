@@ -1,5 +1,5 @@
 import { useLoader } from "@react-three/fiber";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import * as BufferGeometryUtils from "three-stdlib";
 import { OBJLoader } from "three-stdlib";
@@ -39,15 +39,27 @@ export default function GeodesicMesh({
     version,
     startId,
     endId,
+    modelUp = "z",
     onVertexCountChange,
 }: {
     modelPath: string;
     version: number;
     startId: number;
     endId: number;
+    modelUp?: "y" | "z";
     onVertexCountChange?: (count: number) => void;
 }) {
     const originalObj = useLoader(OBJLoader, modelPath);
+
+    const pathInstancedRef = useRef<THREE.InstancedMesh>(null);
+
+    const modelRotation = useMemo(() => {
+        // Our scene is Z-up. If a model was authored Y-up (common for some assets like the bunny),
+        // rotate it so its "up" axis aligns with world +Z.
+        return modelUp === "y"
+            ? (new THREE.Euler(Math.PI / 2, 0, 0) as THREE.Euler)
+            : (new THREE.Euler(0, 0, 0) as THREE.Euler);
+    }, [modelUp]);
 
     const [objVertices, setObjVertices] = useState<THREE.Vector3[] | null>(
         null,
@@ -58,11 +70,26 @@ export default function GeodesicMesh({
         allDistances: number[];
     } | null>(null);
 
+    const activePathData = version === 0 ? null : pathData;
+
     useEffect(() => {
+        if (version === 0) return;
+
+        let cancelled = false;
         // We assume the result.json updates whenever you run the C++ engine
         fetch(`/result.json?v=${Date.now()}`)
             .then((res) => res.json())
-            .then(setPathData);
+            .then((data) => {
+                if (cancelled) return;
+                setPathData(data);
+            })
+            .catch(() => {
+                // Leave existing pathData as-is; activePathData gates rendering.
+            });
+
+        return () => {
+            cancelled = true;
+        };
     }, [modelPath, version]); // Re-fetch data if the model changes
 
     useEffect(() => {
@@ -212,48 +239,87 @@ export default function GeodesicMesh({
 
         geometry.computeVertexNormals();
 
-        // 5) Coloring Logic
-        const count = geometry.attributes.position.count;
-        const colors = new Float32Array(count * 3);
-        const color = new THREE.Color();
-        for (let i = 0; i < count; i++) {
-            // Vertex index i should match the OBJ/C++ vertex index after reordering.
-            const dist = pathData?.allDistances?.[i] || 0;
-            color.setHSL(0.6 * (1 - Math.min(dist / 3, 1)), 1, 0.5);
-            color.toArray(colors, i * 3);
-        }
-        geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-
         return {
             geometry,
             material: new THREE.MeshStandardMaterial({
-                vertexColors: true,
+                color: "#2aa1ff",
                 wireframe: true,
                 transparent: true,
-                opacity: 0.4,
+                opacity: 0.35,
             }),
         };
-    }, [originalObj, pathData, objVertices]);
+    }, [originalObj, objVertices]);
+
+    const meshVertexCount =
+        processedMesh?.geometry.attributes.position.count ?? null;
 
     useEffect(() => {
-        if (!processedMesh || !onVertexCountChange) return;
-        onVertexCountChange(processedMesh.geometry.attributes.position.count);
-    }, [processedMesh, onVertexCountChange]);
+        if (meshVertexCount == null) return;
+        onVertexCountChange?.(meshVertexCount);
+    }, [meshVertexCount, onVertexCountChange]);
 
-    // Dijkstra Path Logic
-    const lineGeometry = useMemo(() => {
-        if (!pathData || !processedMesh) return null;
-        const pos = processedMesh.geometry.attributes.position.array;
-        const points = pathData.path.map(
-            (id: number) =>
-                new THREE.Vector3(
-                    pos[id * 3],
-                    pos[id * 3 + 1],
-                    pos[id * 3 + 2],
-                ),
-        );
-        return new THREE.BufferGeometry().setFromPoints(points);
-    }, [pathData, processedMesh]);
+    // Dijkstra path rendering:
+    // Use straight cylinder segments between vertices (no spline smoothing), so the path
+    // follows the graph edges exactly and doesn't look wavy/curved.
+    const pathSegmentMatrices = useMemo(() => {
+        if (!activePathData || !processedMesh) return [] as THREE.Matrix4[];
+
+        const posAttr = processedMesh.geometry.attributes
+            .position as THREE.BufferAttribute;
+        const pos = posAttr.array as ArrayLike<number>;
+
+        const ids = activePathData.path;
+        if (!ids || ids.length < 2) return [] as THREE.Matrix4[];
+
+        const up = new THREE.Vector3(0, 1, 0);
+        const p1 = new THREE.Vector3();
+        const p2 = new THREE.Vector3();
+        const dir = new THREE.Vector3();
+        const mid = new THREE.Vector3();
+        const quat = new THREE.Quaternion();
+        const scale = new THREE.Vector3();
+        const matrix = new THREE.Matrix4();
+
+        const out: THREE.Matrix4[] = [];
+        for (let i = 0; i < ids.length - 1; i++) {
+            const a = ids[i];
+            const b = ids[i + 1];
+
+            p1.set(
+                Number(pos[a * 3]),
+                Number(pos[a * 3 + 1]),
+                Number(pos[a * 3 + 2]),
+            );
+            p2.set(
+                Number(pos[b * 3]),
+                Number(pos[b * 3 + 1]),
+                Number(pos[b * 3 + 2]),
+            );
+
+            dir.subVectors(p2, p1);
+            const length = dir.length();
+            if (length <= 1e-9) continue;
+
+            mid.addVectors(p1, p2).multiplyScalar(0.5);
+            quat.setFromUnitVectors(up, dir.normalize());
+
+            // CylinderGeometry is built along +Y with height=1; scale Y to the segment length.
+            scale.set(1, length, 1);
+            matrix.compose(mid, quat, scale);
+            out.push(matrix.clone());
+        }
+        return out;
+    }, [activePathData, processedMesh]);
+
+    useEffect(() => {
+        const mesh = pathInstancedRef.current;
+        if (!mesh) return;
+        for (let i = 0; i < pathSegmentMatrices.length; i++) {
+            mesh.setMatrixAt(i, pathSegmentMatrices[i]);
+        }
+        mesh.count = pathSegmentMatrices.length;
+        mesh.instanceMatrix.needsUpdate = true;
+    }, [pathSegmentMatrices]);
     // This calculates the 3D position of the start and end vertices
     // and updates in real-time as startId/endId change.
     const markers = useMemo(() => {
@@ -285,7 +351,7 @@ export default function GeodesicMesh({
     }, [processedMesh, startId, endId]);
 
     return (
-        <group>
+        <group rotation={modelRotation}>
             {processedMesh && (
                 <>
                     <mesh
@@ -316,16 +382,24 @@ export default function GeodesicMesh({
                 </mesh>
             )}
 
-            {/* The dijsktra path */}
-            {lineGeometry && (
-                <primitive
-                    object={
-                        new THREE.Line(
-                            lineGeometry,
-                            new THREE.LineBasicMaterial({ color: "red" }),
-                        )
-                    }
-                />
+            {/* The dijkstra path (straight segments, slightly thicker than edges) */}
+            {pathSegmentMatrices.length > 0 && (
+                <instancedMesh
+                    ref={pathInstancedRef}
+                    args={[undefined, undefined, pathSegmentMatrices.length]}
+                    renderOrder={10}
+                    frustumCulled={false}
+                >
+                    {/* height=1; scaled per-instance to the actual segment length */}
+                    <cylinderGeometry args={[0.01, 0.01, 1, 10]} />
+                    <meshBasicMaterial
+                        color="#ff2d2d"
+                        depthWrite={false}
+                        polygonOffset
+                        polygonOffsetFactor={-2}
+                        polygonOffsetUnits={-2}
+                    />
+                </instancedMesh>
             )}
         </group>
     );

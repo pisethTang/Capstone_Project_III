@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
 
 	// We will load the failing dataset
 	if (!engine.loadOBJ(fileName)) {
-		std::cerr << "Error: Could not find zig_zag.obj" << std::endl;
+		std::cerr << "Error: Could not find " << fileName << std::endl;
 		return 1;
 	}
 
