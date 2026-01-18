@@ -1,37 +1,76 @@
-import { useLoader } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import * as BufferGeometryUtils from "three-stdlib";
-import { OBJLoader } from "three-stdlib";
 import VertexLabels from "../src/VertexLabels";
 
-function parseObjVertices(objText: string): THREE.Vector3[] {
+type ParsedObj = {
+    vertices: THREE.Vector3[];
+    triangles: number[]; // flat array of vertex indices [a,b,c,a,b,c,...]
+};
+
+function parseObj(objText: string): ParsedObj {
     const vertices: THREE.Vector3[] = [];
+    const triangles: number[] = [];
+
     const lines = objText.split(/\r?\n/);
-    for (const line of lines) {
-        if (!line.startsWith("v ")) continue;
-        const parts = line.trim().split(/\s+/);
-        if (parts.length < 4) continue;
-        const x = Number(parts[1]);
-        const y = Number(parts[2]);
-        const z = Number(parts[3]);
-        if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)) {
-            vertices.push(new THREE.Vector3(x, y, z));
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (line.length === 0 || line.startsWith("#")) continue;
+
+        if (line.startsWith("v ")) {
+            const parts = line.split(/\s+/);
+            if (parts.length < 4) continue;
+            const x = Number(parts[1]);
+            const y = Number(parts[2]);
+            const z = Number(parts[3]);
+            if (
+                Number.isFinite(x) &&
+                Number.isFinite(y) &&
+                Number.isFinite(z)
+            ) {
+                vertices.push(new THREE.Vector3(x, y, z));
+            }
+            continue;
+        }
+
+        if (line.startsWith("f ")) {
+            const parts = line.split(/\s+/).slice(1);
+            if (parts.length < 3) continue;
+
+            // Support tokens like "12", "12/3/7", "12//7".
+            const toIndex = (token: string) => {
+                const head = token.split("/")[0];
+                const idx = Number(head);
+                if (!Number.isFinite(idx) || idx === 0) return null;
+                // OBJ indices are 1-based; negative indices are relative to the end.
+                const resolved = idx > 0 ? idx - 1 : vertices.length + idx;
+                return resolved >= 0 && resolved < vertices.length
+                    ? resolved
+                    : null;
+            };
+
+            const faceIndices: number[] = [];
+            for (const t of parts) {
+                const resolved = toIndex(t);
+                if (resolved == null) {
+                    faceIndices.length = 0;
+                    break;
+                }
+                faceIndices.push(resolved);
+            }
+            if (faceIndices.length < 3) continue;
+
+            // Triangulate fan for quads/ngons: (0,i,i+1)
+            for (let i = 1; i + 1 < faceIndices.length; i++) {
+                triangles.push(
+                    faceIndices[0],
+                    faceIndices[i],
+                    faceIndices[i + 1],
+                );
+            }
         }
     }
-    return vertices;
-}
 
-function positionKey(
-    x: number,
-    y: number,
-    z: number,
-    tolerance: number,
-): string {
-    const qx = Math.round(x / tolerance);
-    const qy = Math.round(y / tolerance);
-    const qz = Math.round(z / tolerance);
-    return `${qx}|${qy}|${qz}`;
+    return { vertices, triangles };
 }
 
 export default function GeodesicMesh({
@@ -49,8 +88,6 @@ export default function GeodesicMesh({
     modelUp?: "y" | "z";
     onVertexCountChange?: (count: number) => void;
 }) {
-    const originalObj = useLoader(OBJLoader, modelPath);
-
     const pathInstancedRef = useRef<THREE.InstancedMesh>(null);
 
     const modelRotation = useMemo(() => {
@@ -61,9 +98,7 @@ export default function GeodesicMesh({
             : (new THREE.Euler(0, 0, 0) as THREE.Euler);
     }, [modelUp]);
 
-    const [objVertices, setObjVertices] = useState<THREE.Vector3[] | null>(
-        null,
-    );
+    const [objData, setObjData] = useState<ParsedObj | null>(null);
 
     const [pathData, setPathData] = useState<{
         path: number[];
@@ -98,11 +133,11 @@ export default function GeodesicMesh({
             .then((res) => res.text())
             .then((text) => {
                 if (cancelled) return;
-                setObjVertices(parseObjVertices(text));
+                setObjData(parseObj(text));
             })
             .catch(() => {
                 if (cancelled) return;
-                setObjVertices(null);
+                setObjData(null);
             });
         return () => {
             cancelled = true;
@@ -110,29 +145,35 @@ export default function GeodesicMesh({
     }, [modelPath]);
 
     const processedMesh = useMemo(() => {
-        if (!originalObj) return null;
-        const mesh = originalObj.children.find(
-            (c) => c instanceof THREE.Mesh,
-        ) as THREE.Mesh;
-        if (!mesh) return null;
+        if (!objData || objData.vertices.length === 0) return null;
 
-        // 1) Start from a clean clone.
-        // OBJLoader often produces a geometry where the same logical OBJ vertex is duplicated
-        // across faces (and may differ in normals/uvs). That creates "overlapping vertices"
-        // and breaks vertex indexing vs your C++ engine.
-        let geometry = mesh.geometry.clone();
-
-        // 2) Weld by POSITION ONLY.
-        // BufferGeometryUtils.mergeVertices considers *all* attributes when deciding uniqueness.
-        // If normals/uvs differ, identical positions won't merge, leaving duplicates.
-        geometry = geometry.toNonIndexed();
-        for (const name of Object.keys(geometry.attributes)) {
-            if (name !== "position") geometry.deleteAttribute(name);
+        // Build geometry directly from OBJ vertex order + face indices.
+        // This guarantees the same indexing as your C++ engine.
+        const positions = new Float32Array(objData.vertices.length * 3);
+        for (let i = 0; i < objData.vertices.length; i++) {
+            const v = objData.vertices[i];
+            positions[i * 3] = v.x;
+            positions[i * 3 + 1] = v.y;
+            positions[i * 3 + 2] = v.z;
         }
-        const mergeTolerance = 1e-6;
-        geometry = BufferGeometryUtils.mergeVertices(geometry, mergeTolerance);
 
-        // 3) Standard scaling logic (applied to both the mesh geometry and the raw OBJ vertices).
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute(
+            "position",
+            new THREE.BufferAttribute(positions, 3),
+        );
+        if (objData.triangles.length > 0) {
+            const IndexArrayCtor =
+                objData.vertices.length > 65535 ? Uint32Array : Uint16Array;
+            geometry.setIndex(
+                new THREE.BufferAttribute(
+                    new IndexArrayCtor(objData.triangles),
+                    1,
+                ),
+            );
+        }
+
+        // Center + scale to a consistent size.
         geometry.computeBoundingBox();
         const box = geometry.boundingBox!;
         const size = new THREE.Vector3();
@@ -143,112 +184,16 @@ export default function GeodesicMesh({
         const scale = 2 / Math.max(size.x, size.y, size.z);
         geometry.scale(scale, scale, scale);
 
-        // 4) Reorder vertices to match the OBJ file's original `v` order.
-        // This makes vertex IDs 0..N-1 line up with the C++ engine that uses OBJ vertex indices.
-        if (objVertices && objVertices.length > 0 && geometry.getIndex()) {
-            const expectedCount = objVertices.length;
-            const posAttr = geometry.getAttribute(
-                "position",
-            ) as THREE.BufferAttribute;
-            const posArray = posAttr.array as ArrayLike<number>;
-            const actualCount = posAttr.count;
-
-            if (actualCount === expectedCount) {
-                // Transform raw OBJ vertices with the same translate/scale applied to geometry.
-                const objTransformed = objVertices.map((v) =>
-                    v.clone().sub(center).multiplyScalar(scale),
-                );
-
-                const keyToObjIndices = new Map<string, number[]>();
-                const reorderTol = 1e-5;
-                for (let i = 0; i < objTransformed.length; i++) {
-                    const v = objTransformed[i];
-                    const key = positionKey(v.x, v.y, v.z, reorderTol);
-                    const bucket = keyToObjIndices.get(key);
-                    if (bucket) bucket.push(i);
-                    else keyToObjIndices.set(key, [i]);
-                }
-
-                const oldToNew = new Int32Array(actualCount);
-                oldToNew.fill(-1);
-                for (let oldIndex = 0; oldIndex < actualCount; oldIndex++) {
-                    const x = Number(posArray[oldIndex * 3]);
-                    const y = Number(posArray[oldIndex * 3 + 1]);
-                    const z = Number(posArray[oldIndex * 3 + 2]);
-                    const key = positionKey(x, y, z, reorderTol);
-                    const bucket = keyToObjIndices.get(key);
-                    if (bucket && bucket.length > 0) {
-                        oldToNew[oldIndex] = bucket.pop()!;
-                    }
-                }
-
-                let mappingOk = true;
-                const seen = new Uint8Array(actualCount);
-                for (let i = 0; i < oldToNew.length; i++) {
-                    const newIndex = oldToNew[i];
-                    if (newIndex < 0 || newIndex >= actualCount) {
-                        mappingOk = false;
-                        break;
-                    }
-                    if (seen[newIndex]) {
-                        mappingOk = false;
-                        break;
-                    }
-                    seen[newIndex] = 1;
-                }
-
-                if (mappingOk) {
-                    const newPositions = new Float32Array(actualCount * 3);
-                    for (let oldIndex = 0; oldIndex < actualCount; oldIndex++) {
-                        const newIndex = oldToNew[oldIndex];
-                        newPositions[newIndex * 3] = Number(
-                            posArray[oldIndex * 3],
-                        );
-                        newPositions[newIndex * 3 + 1] = Number(
-                            posArray[oldIndex * 3 + 1],
-                        );
-                        newPositions[newIndex * 3 + 2] = Number(
-                            posArray[oldIndex * 3 + 2],
-                        );
-                    }
-
-                    const oldIndexAttr = geometry.getIndex()!;
-                    const oldIndexArray = oldIndexAttr.array as
-                        | Uint16Array
-                        | Uint32Array;
-                    const NewIndexArrayCtor = oldIndexArray.constructor as
-                        | Uint16ArrayConstructor
-                        | Uint32ArrayConstructor;
-                    const newIndexArray = new NewIndexArrayCtor(
-                        oldIndexArray.length,
-                    );
-                    for (let i = 0; i < oldIndexArray.length; i++) {
-                        newIndexArray[i] = oldToNew[oldIndexArray[i]];
-                    }
-
-                    geometry.setAttribute(
-                        "position",
-                        new THREE.BufferAttribute(newPositions, 3),
-                    );
-                    geometry.setIndex(
-                        new THREE.BufferAttribute(newIndexArray, 1),
-                    );
-                }
-            }
-        }
-
-        geometry.computeVertexNormals();
+        // Use explicit wireframe geometry so what you see is exactly the OBJ edges.
+        const wireframe = new THREE.WireframeGeometry(geometry);
 
         return {
             geometry,
-            material: new THREE.MeshStandardMaterial({
-                color: "#2aa1ff",
-                wireframe: true,
-                transparent: true,
-                opacity: 0.35,
-            }),
+            wireframe,
+            scale,
+            center,
         };
-    }, [originalObj, objVertices]);
+    }, [objData]);
 
     const meshVertexCount =
         processedMesh?.geometry.attributes.position.count ?? null;
@@ -354,10 +299,14 @@ export default function GeodesicMesh({
         <group rotation={modelRotation}>
             {processedMesh && (
                 <>
-                    <mesh
-                        geometry={processedMesh.geometry}
-                        material={processedMesh.material}
-                    />
+                    <lineSegments>
+                        <primitive object={processedMesh.wireframe} />
+                        <lineBasicMaterial
+                            color="#2aa1ff"
+                            transparent
+                            opacity={0.6}
+                        />
+                    </lineSegments>
                     <VertexLabels
                         positions={
                             processedMesh.geometry.attributes.position

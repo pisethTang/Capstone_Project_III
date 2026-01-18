@@ -1,6 +1,6 @@
 {
-  "inputFileName": "/home/sething2002/Capstone_Project/Capstone_Project_III/frontend/public/data/zig_zag.obj",
-  "totalDistance": 1.41421,
-  "path": [1, 3],
-  "allDistances": [1, 0, 1, 1.41421]
+  "inputFileName": "/home/sething2002/Capstone_Project/Capstone_Project_III/frontend/public/data/icosahedron.obj",
+  "totalDistance": 1.05146,
+  "path": [1, 10],
+  "allDistances": [1.05145, 0, 1.05145, 2.10291, 2.10289, 1.05144, 1.05147, 2.10291, 1.79769e+308, 2.10291, 1.05146, 1.79769e+308]
 }

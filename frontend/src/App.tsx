@@ -18,6 +18,7 @@ export default function App() {
     const [loading, setLoading] = useState(false);
     const [version, setVersion] = useState(0);
     const [vertexCount, setVertexCount] = useState<number | null>(null);
+    const [showAxes, setShowAxes] = useState(true);
 
     const clampId = (value: number) => {
         const asInt = Number.isFinite(value) ? Math.trunc(value) : 0;
@@ -106,6 +107,21 @@ export default function App() {
                 </select>
 
                 <div style={{ marginTop: "10px" }}>
+                    <button
+                        onClick={() => setShowAxes((v) => !v)}
+                        style={{
+                            ...buttonStyle,
+                            marginTop: 0,
+                            background: showAxes ? "#333" : "#555",
+                            padding: "8px",
+                            fontWeight: 600,
+                        }}
+                    >
+                        {showAxes ? "Hide Axes" : "Show Axes"}
+                    </button>
+                </div>
+
+                <div style={{ marginTop: "10px" }}>
                     <label>Start ID: </label>
                     <input
                         type="number"
@@ -149,7 +165,7 @@ export default function App() {
             <Canvas camera={{ position: [2, 2, 1.2], up: [0, 0, 1] }}>
                 <ambientLight intensity={0.7} />
                 <pointLight position={[10, 10, 10]} />
-                <Axes size={2} />
+                {showAxes && <Axes size={2} />}
                 <Suspense fallback={null}>
                     <GeodesicMesh
                         modelPath={`/data/${modelFile}`}
