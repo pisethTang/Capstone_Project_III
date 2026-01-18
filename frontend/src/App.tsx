@@ -15,6 +15,13 @@ export default function App() {
     const [endId, setEndId] = useState(11);
     const [loading, setLoading] = useState(false);
     const [version, setVersion] = useState(0);
+    const [vertexCount, setVertexCount] = useState<number | null>(null);
+
+    const clampId = (value: number) => {
+        const asInt = Number.isFinite(value) ? Math.trunc(value) : 0;
+        if (!vertexCount || vertexCount <= 0) return Math.max(0, asInt);
+        return Math.max(0, Math.min(vertexCount - 1, asInt));
+    };
 
     // Make a call to the /compute endpoint
     const handleCompute = async () => {
@@ -31,7 +38,7 @@ export default function App() {
 
         if (response.ok) {
             // trigger a re-render in GeodesicMesh by updating a key or ref
-            setVersion(v => v + 1); // triggers the useEffect in GeoedesicMesh
+            setVersion((v) => v + 1); // triggers the useEffect in GeoedesicMesh
             setLoading(false);
         }
     };
@@ -51,7 +58,12 @@ export default function App() {
                 <label>Select Model: </label>
                 <select
                     value={modelFile}
-                    onChange={(e) => setModelFile(e.target.value)}
+                    onChange={(e) => {
+                        setModelFile(e.target.value);
+                        setVersion(0); // hides the red line
+                        setStartId(0); // reset inputs
+                        setEndId(1);
+                    }}
                     style={{
                         padding: "5px",
                         background: "#333",
@@ -71,7 +83,12 @@ export default function App() {
                     <input
                         type="number"
                         value={startId}
-                        onChange={(e) => setStartId(Number(e.target.value))}
+                        min={0}
+                        max={vertexCount ? vertexCount - 1 : undefined}
+                        step={1}
+                        onChange={(e) =>
+                            setStartId(clampId(Number(e.target.value)))
+                        }
                         style={inputStyle}
                     ></input>
                 </div>
@@ -81,7 +98,12 @@ export default function App() {
                     <input
                         type="number"
                         value={endId}
-                        onChange={(e) => setEndId(Number(e.target.value))}
+                        min={0}
+                        max={vertexCount ? vertexCount - 1 : undefined}
+                        step={1}
+                        onChange={(e) =>
+                            setEndId(clampId(Number(e.target.value)))
+                        }
                         style={inputStyle}
                     ></input>
                 </div>
@@ -100,7 +122,28 @@ export default function App() {
                 <ambientLight intensity={0.7} />
                 <pointLight position={[10, 10, 10]} />
                 <Suspense fallback={null}>
-                    <GeodesicMesh modelPath={`/data/${modelFile}`} version={version} />
+                    <GeodesicMesh
+                        modelPath={`/data/${modelFile}`}
+                        version={version}
+                        startId={startId}
+                        endId={endId}
+                        onVertexCountChange={(count) => {
+                            setVertexCount(count);
+                            // Clamp existing values if a different model loads.
+                            setStartId((prev) => {
+                                const asInt = Number.isFinite(prev)
+                                    ? Math.trunc(prev)
+                                    : 0;
+                                return Math.max(0, Math.min(count - 1, asInt));
+                            });
+                            setEndId((prev) => {
+                                const asInt = Number.isFinite(prev)
+                                    ? Math.trunc(prev)
+                                    : 0;
+                                return Math.max(0, Math.min(count - 1, asInt));
+                            });
+                        }}
+                    />
                 </Suspense>
                 <OrbitControls makeDefault />
             </Canvas>

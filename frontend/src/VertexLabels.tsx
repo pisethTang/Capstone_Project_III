@@ -1,13 +1,12 @@
 import { Html } from "@react-three/drei";
 
 interface Props {
-    positions: Float32Array;
+    positions: ArrayLike<number>;
 }
 
 export default function VertexLabels({ positions }: Props) {
     // We only show labels if there are a small number of vertices (e.g., < 100)
     // to avoid crashing the browser with the Bunny.
-    console.log(positions);
     if (positions.length / 3 > 100) return null;
 
     const labels = [];
