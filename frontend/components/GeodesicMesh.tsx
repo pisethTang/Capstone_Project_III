@@ -7,6 +7,13 @@ type ParsedObj = {
     triangles: number[]; // flat array of vertex indices [a,b,c,a,b,c,...]
 };
 
+type DijkstraJson = {
+    inputFileName?: string;
+    totalDistance: number;
+    path: number[];
+    allDistances: number[];
+};
+
 function parseObj(objText: string): ParsedObj {
     const vertices: THREE.Vector3[] = [];
     const triangles: number[] = [];
@@ -80,6 +87,9 @@ export default function GeodesicMesh({
     endId,
     modelUp = "z",
     onVertexCountChange,
+    onMeshStatsChange,
+    highlightFaceIndex,
+    onDijkstraResultChange,
 }: {
     modelPath: string;
     version: number;
@@ -87,6 +97,18 @@ export default function GeodesicMesh({
     endId: number;
     modelUp?: "y" | "z";
     onVertexCountChange?: (count: number) => void;
+    onMeshStatsChange?: (stats: {
+        vertexCount: number;
+        faceCount: number;
+    }) => void;
+    highlightFaceIndex?: number | null;
+    onDijkstraResultChange?: (
+        result: {
+            totalDistance: number;
+            inputFileName?: string;
+            pathLength: number;
+        } | null,
+    ) => void;
 }) {
     const pathInstancedRef = useRef<THREE.InstancedMesh>(null);
 
@@ -100,10 +122,7 @@ export default function GeodesicMesh({
 
     const [objData, setObjData] = useState<ParsedObj | null>(null);
 
-    const [pathData, setPathData] = useState<{
-        path: number[];
-        allDistances: number[];
-    } | null>(null);
+    const [pathData, setPathData] = useState<DijkstraJson | null>(null);
 
     const activePathData = version === 0 ? null : pathData;
 
@@ -114,7 +133,7 @@ export default function GeodesicMesh({
         // We assume the result.json updates whenever you run the C++ engine
         fetch(`/result.json?v=${Date.now()}`)
             .then((res) => res.json())
-            .then((data) => {
+            .then((data: DijkstraJson) => {
                 if (cancelled) return;
                 setPathData(data);
             })
@@ -126,6 +145,19 @@ export default function GeodesicMesh({
             cancelled = true;
         };
     }, [modelPath, version]); // Re-fetch data if the model changes
+
+    useEffect(() => {
+        if (!onDijkstraResultChange) return;
+        if (!activePathData) {
+            onDijkstraResultChange(null);
+            return;
+        }
+        onDijkstraResultChange({
+            totalDistance: activePathData.totalDistance,
+            inputFileName: activePathData.inputFileName,
+            pathLength: activePathData.path?.length ?? 0,
+        });
+    }, [activePathData, onDijkstraResultChange]);
 
     useEffect(() => {
         let cancelled = false;
@@ -198,10 +230,67 @@ export default function GeodesicMesh({
     const meshVertexCount =
         processedMesh?.geometry.attributes.position.count ?? null;
 
+    const meshFaceCount = useMemo(() => {
+        if (!processedMesh?.geometry.index) return null;
+        const indexCount = processedMesh.geometry.index.count;
+        if (!Number.isFinite(indexCount) || indexCount < 0) return null;
+        return Math.floor(indexCount / 3);
+    }, [processedMesh]);
+
     useEffect(() => {
         if (meshVertexCount == null) return;
         onVertexCountChange?.(meshVertexCount);
     }, [meshVertexCount, onVertexCountChange]);
+
+    useEffect(() => {
+        if (meshVertexCount == null || meshFaceCount == null) return;
+        onMeshStatsChange?.({
+            vertexCount: meshVertexCount,
+            faceCount: meshFaceCount,
+        });
+    }, [meshVertexCount, meshFaceCount, onMeshStatsChange]);
+
+    const highlightedFaceGeometry = useMemo(() => {
+        if (!processedMesh) return null;
+        if (highlightFaceIndex == null) return null;
+        const geom = processedMesh.geometry;
+        const indexAttr = geom.index;
+        const posAttr = geom.attributes.position as THREE.BufferAttribute;
+        if (!indexAttr || !posAttr) return null;
+
+        const faceCount = Math.floor(indexAttr.count / 3);
+        if (faceCount <= 0) return null;
+
+        const face = Math.max(
+            0,
+            Math.min(faceCount - 1, Math.trunc(highlightFaceIndex)),
+        );
+        const i0 = Number(indexAttr.getX(face * 3));
+        const i1 = Number(indexAttr.getX(face * 3 + 1));
+        const i2 = Number(indexAttr.getX(face * 3 + 2));
+        if (
+            ![i0, i1, i2].every(
+                (v) => Number.isFinite(v) && v >= 0 && v < posAttr.count,
+            )
+        ) {
+            return null;
+        }
+
+        const out = new THREE.BufferGeometry();
+        const tri = new Float32Array(9);
+        tri[0] = Number(posAttr.getX(i0));
+        tri[1] = Number(posAttr.getY(i0));
+        tri[2] = Number(posAttr.getZ(i0));
+        tri[3] = Number(posAttr.getX(i1));
+        tri[4] = Number(posAttr.getY(i1));
+        tri[5] = Number(posAttr.getZ(i1));
+        tri[6] = Number(posAttr.getX(i2));
+        tri[7] = Number(posAttr.getY(i2));
+        tri[8] = Number(posAttr.getZ(i2));
+        out.setAttribute("position", new THREE.BufferAttribute(tri, 3));
+        out.computeVertexNormals();
+        return out;
+    }, [processedMesh, highlightFaceIndex]);
 
     // Dijkstra path rendering:
     // Use straight cylinder segments between vertices (no spline smoothing), so the path
@@ -265,6 +354,76 @@ export default function GeodesicMesh({
         mesh.count = pathSegmentMatrices.length;
         mesh.instanceMatrix.needsUpdate = true;
     }, [pathSegmentMatrices]);
+
+    const meshEdgeScale = useMemo(() => {
+        if (!processedMesh) {
+            return { avgEdgeLen: 0.02, markerRadius: 0.02, pathRadius: 0.005 };
+        }
+        const geom = processedMesh.geometry;
+        const indexAttr = geom.index;
+        const posAttr = geom.attributes.position as THREE.BufferAttribute;
+        if (!indexAttr || !posAttr || posAttr.count <= 0) {
+            return { avgEdgeLen: 0.02, markerRadius: 0.02, pathRadius: 0.005 };
+        }
+
+        const positions = posAttr.array as ArrayLike<number>;
+        const indices = indexAttr.array as ArrayLike<number>;
+        const faceCount = Math.floor(indexAttr.count / 3);
+        if (faceCount <= 0) {
+            return { avgEdgeLen: 0.02, markerRadius: 0.02, pathRadius: 0.005 };
+        }
+
+        const maxTriangleSamples = 5000;
+        const triStep = Math.max(1, Math.floor(faceCount / maxTriangleSamples));
+
+        const dist = (a: number, b: number) => {
+            const ax = Number(positions[a * 3]);
+            const ay = Number(positions[a * 3 + 1]);
+            const az = Number(positions[a * 3 + 2]);
+            const bx = Number(positions[b * 3]);
+            const by = Number(positions[b * 3 + 1]);
+            const bz = Number(positions[b * 3 + 2]);
+            const dx = bx - ax;
+            const dy = by - ay;
+            const dz = bz - az;
+            return Math.sqrt(dx * dx + dy * dy + dz * dz);
+        };
+
+        let sum = 0;
+        let samples = 0;
+        for (let t = 0; t < faceCount; t += triStep) {
+            const base = t * 3;
+            const i0 = Number(indices[base]);
+            const i1 = Number(indices[base + 1]);
+            const i2 = Number(indices[base + 2]);
+            if (
+                !Number.isFinite(i0) ||
+                !Number.isFinite(i1) ||
+                !Number.isFinite(i2) ||
+                i0 < 0 ||
+                i1 < 0 ||
+                i2 < 0 ||
+                i0 >= posAttr.count ||
+                i1 >= posAttr.count ||
+                i2 >= posAttr.count
+            ) {
+                continue;
+            }
+            sum += dist(i0, i1) + dist(i1, i2) + dist(i2, i0);
+            samples += 3;
+        }
+
+        const avgEdgeLen = samples > 0 ? sum / samples : 0.02;
+
+        // Heuristics (in world units after our normalize-to-size transform):
+        // - Markers: a bit bigger than before so they're easier to see on dense meshes.
+        // - Path: just slightly thicker than the wireframe, so individual edges are still readable.
+        const markerRadius = Math.max(0.006, Math.min(0.08, avgEdgeLen * 0.12));
+        const pathRadius = Math.max(0.0015, Math.min(0.01, avgEdgeLen * 0.02));
+
+        return { avgEdgeLen, markerRadius, pathRadius };
+    }, [processedMesh]);
+
     // This calculates the 3D position of the start and end vertices
     // and updates in real-time as startId/endId change.
     const markers = useMemo(() => {
@@ -299,6 +458,23 @@ export default function GeodesicMesh({
         <group rotation={modelRotation}>
             {processedMesh && (
                 <>
+                    {highlightedFaceGeometry && (
+                        <mesh
+                            geometry={highlightedFaceGeometry}
+                            renderOrder={5}
+                        >
+                            <meshBasicMaterial
+                                color="#ffd54a"
+                                transparent
+                                opacity={0.45}
+                                side={THREE.DoubleSide}
+                                depthWrite={false}
+                                polygonOffset
+                                polygonOffsetFactor={-2}
+                                polygonOffsetUnits={-2}
+                            />
+                        </mesh>
+                    )}
                     <lineSegments>
                         <primitive object={processedMesh.wireframe} />
                         <lineBasicMaterial
@@ -317,17 +493,21 @@ export default function GeodesicMesh({
             )}
             {/* Start Point - RED */}
             {markers && (
-                <mesh position={markers.start}>
-                    <sphereGeometry args={[0.07, 16, 16]} />
-                    <meshBasicMaterial color="#ea1313" />
+                <mesh position={markers.start} renderOrder={20}>
+                    <sphereGeometry
+                        args={[meshEdgeScale.markerRadius, 12, 12]}
+                    />
+                    <meshBasicMaterial color="#ea1313" depthTest={false} />
                 </mesh>
             )}
 
             {/* End Point - GREEN */}
             {markers && (
-                <mesh position={markers.end}>
-                    <sphereGeometry args={[0.07, 16, 16]} />
-                    <meshBasicMaterial color="#32CD32" />
+                <mesh position={markers.end} renderOrder={20}>
+                    <sphereGeometry
+                        args={[meshEdgeScale.markerRadius, 12, 12]}
+                    />
+                    <meshBasicMaterial color="#32CD32" depthTest={false} />
                 </mesh>
             )}
 
@@ -340,10 +520,18 @@ export default function GeodesicMesh({
                     frustumCulled={false}
                 >
                     {/* height=1; scaled per-instance to the actual segment length */}
-                    <cylinderGeometry args={[0.01, 0.01, 1, 10]} />
+                    <cylinderGeometry
+                        args={[
+                            meshEdgeScale.pathRadius,
+                            meshEdgeScale.pathRadius,
+                            1,
+                            10,
+                        ]}
+                    />
                     <meshBasicMaterial
                         color="#ff2d2d"
                         depthWrite={false}
+                        depthTest
                         polygonOffset
                         polygonOffsetFactor={-2}
                         polygonOffsetUnits={-2}
