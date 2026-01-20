@@ -1,5 +1,8 @@
 # Geodesic Lab
 
+
+![alt text](image.png)
+
 This project computes and visualizes shortest‑path approximations on 3D meshes using a C++ engine, a Go API server, and a React + Three.js frontend.
 
 ## System Flow (End‑to‑End)
