@@ -1,0 +1,11 @@
+# zig_zag.obj
+# Vertices for a 1x1 square
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 1.0 1.0 0.0
+v 0.0 1.0 0.0
+
+# Triangulation that blocks the direct diagonal (0 to 2)
+# We connect 1 and 3 instead.
+f 1 2 4
+f 2 3 4

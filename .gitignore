@@ -1,1 +1,8 @@
-frontend/node_modules 
+.vscode/
+.cache/
+build/
+
+
+
+# all cache files 
+**/__pycache__/
