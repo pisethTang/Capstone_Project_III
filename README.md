@@ -1,62 +1,116 @@
-# Capstone_Project_III
-This repository stores the following, but not limited to. for my Math's  Capstone Course III: course notes, scripts to animate (and explain) various math objects in C, C++ and Python. 
+# Geodesic Lab
 
-Below are some suggestions: 
+This project computes and visualizes shortest‑path approximations on 3D meshes using a C++ engine, a Go API server, and a React + Three.js frontend.
 
-Of course! This is an excellent project that combines your interests in differential geometry and programming. Using C++ is a fantastic choice for this task because it offers the performance needed for numerical computations and real-time graphics.
+## System Flow (End‑to‑End)
 
-C++ is definitely the way to go over C for this project. The availability of powerful, high-level libraries and object-oriented features will save you a massive amount of time.
+### Run Dijkstra
 
-Here's a breakdown of the problem into its two main parts—**computation** and **visualization**—along with library recommendations for each.
+1. You click **Run Dijkstra** in the UI.
+2. The React app sends a POST request to the Go server at /compute.
+3. The Go server runs the C++ engine binary in [main.cpp](main.cpp) with arguments: startId, endId, model path.
+4. The C++ engine loads the OBJ, builds a graph, runs Dijkstra, and writes result.json.
+5. The React app fetches result.json and renders the path in red.
 
-***
+### Run Analytics
 
-### Part 1: The Computation (Solving the Geodesic Equation)
+1. You click **Run Analytics** in the UI.
+2. The React app sends a POST request to the Go server at /analytics.
+3. The Go server runs the C++ engine with mode analytics.
+4. The C++ engine calls the analytic solver in [analytics.hpp](analytics.hpp) and writes analytics.json.
+5. The React app fetches analytics.json and renders the path in yellow.
 
-A geodesic is the solution to a system of second-order ordinary differential equations (ODEs). For a surface with coordinates $(u, v)$, the geodesic equation is:
+### Diagram
 
-$$\frac{d^2 x^k}{dt^2} + \sum_{i,j} \Gamma^k_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt} = 0$$
+```mermaid
+sequenceDiagram
+    participant UI as React UI (frontend)
+    participant API as Go API (backend)
+    participant CPP as C++ Engine
+    participant FS as frontend/public/*.json
 
-where $x^1=u$, $x^2=v$, and $\Gamma^k_{ij}$ are the Christoffel symbols of the second kind, which depend on the surface's metric tensor. Your main computational task is to solve this system of ODEs numerically.
+    UI->>API: POST /compute {start,end,model}
+    API->>CPP: exec ./main start end model
+    CPP->>FS: write result.json
+    UI->>FS: fetch result.json
+    UI->>UI: render Dijkstra path (red)
 
-For this, you need two types of libraries: one for linear algebra and one for solving ODEs.
+    UI->>API: POST /analytics {start,end,model}
+    API->>CPP: exec ./main start end model analytics
+    CPP->>FS: write analytics.json
+    UI->>FS: fetch analytics.json
+    UI->>UI: render analytic path (yellow)
+```
 
-#### Recommended Libraries for Computation:
+## Core Algorithms
 
-1.  **Eigen:** This is a top-tier, header-only C++ library for linear algebra. You'll use it for handling vectors (positions, velocities) and matrices (metric tensor). It's fast, expressive, and easy to integrate into any project.
-2.  **Boost.Odeint:** Part of the famous Boost C++ libraries, `Odeint` is a header-only library specifically designed for solving ODEs. It provides a wide range of numerical solvers, like various Runge-Kutta methods, which are perfect for this problem. You simply define a function that represents the geodesic equation, and `Odeint` handles the integration steps for you.
-3.  **GSL (GNU Scientific Library):** This is a C library, but it's very comprehensive and can be easily used from C++. It has robust routines for linear algebra and ODE solving. It's a great alternative to Boost if you prefer a more C-style API.
+### 1) Dijkstra on the Mesh Graph
 
-**Top Recommendation:** **Eigen + Boost.Odeint**. This combination is modern, easy to set up (no linking required for header-only libraries), and extremely powerful.
+We treat mesh vertices as nodes and edges as graph edges. Each edge weight is the Euclidean length between adjacent vertices. The algorithm computes the shortest path along edges only.
 
-***
+Given a graph $G=(V,E)$ with edge weights $w(u,v)$, Dijkstra computes distances:
 
-###  Part 2: The Visualization (Drawing the Surface and the Path)
+$$
+d(s)=0,\quad d(v)=\min_{(u,v)\in E}\{d(u)+w(u,v)\}
+$$
 
-Once you have the sequence of points that form the geodesic from your ODE solver, you need to render them in 3D. This involves drawing the surface itself (as a mesh) and then drawing the path on top of it.
+The path is then recovered by parent pointers.
 
-#### Recommended Libraries for Visualization:
+Implementation: [main.cpp](main.cpp)
 
-1.  **OpenGL (The Low-Level Standard):** This is the fundamental API for 3D graphics. While you can use it directly, it requires a lot of boilerplate code to set up a window, handle user input, and manage matrices. I strongly recommend using helper libraries to make it easier.
-    * **GLFW** or **SDL:** Use one of these to create a window, an OpenGL context, and handle keyboard/mouse input (e.g., for rotating the camera).
-    * **GLM (OpenGL Mathematics):** A header-only library that provides vector and matrix classes that are designed to work seamlessly with OpenGL. You'll use this for your model, view, and projection matrices.
-2.  **Pangolin:** This is a fantastic, lightweight library for managing OpenGL windows and 3D visualization. It's much simpler to get started with than raw OpenGL + helpers. It's widely used in robotics and computer vision research for exactly this kind of task: visualizing 3D data and camera views quickly. **This is probably the best choice for your project.**
-3.  **Dear ImGui:** This is not for the 3D rendering itself, but it's an incredible library for creating a graphical user interface (GUI) on top of your visualization. You could use it to add buttons to start/stop the simulation, sliders to change the initial direction of the geodesic, or text boxes to input surface parameters. It integrates beautifully with OpenGL+GLFW/SDL.
+### 2) Analytic Geodesics (Parametric Surfaces)
 
-**Top Recommendation:** **Pangolin** for its simplicity and power. If you want more control and a learning experience, go with **OpenGL + GLFW + GLM**. Add **Dear ImGui** to make your application interactive.
+The analytic solver in [analytics.hpp](analytics.hpp) uses closed‑form or ODE solutions for special surfaces:
 
-***
+#### Plane
 
-### 💻 A Recommended Workflow
+Geodesic is a straight line:
+$$\gamma(t)=(1-t)p_0 + t p_1$$
 
-Here is a step-by-step plan for your project:
+#### Sphere
 
-1.  **Choose a Surface:** Start with a simple one, like a cylinder or a sphere.
-2.  **Parametrize It:** Define your surface as a function $S(u, v) = (x(u,v), y(u,v), z(u,v))$.
-3.  **Calculate Christoffel Symbols:** For your chosen surface, you need to calculate the metric tensor ($g_{ij}$) and then the Christoffel symbols ($\Gamma^k_{ij}$). You can do this by hand for simple surfaces and code the resulting formulas. This is a key part of the differential geometry for your report!
-4.  **Set Up the ODE System:** Write a C++ function that takes the current state (position $(u, v)$ and velocity $(u', v')$) and calculates the acceleration $(u'', v'')$ using the geodesic equation. This is the function you will pass to `Boost.Odeint`.
-5.  **Solve the Geodesic:** Use `Boost.Odeint` to integrate the ODEs from a given starting point and initial direction. This will produce a series of $(u,v)$ points along the geodesic.
-6.  **Map to 3D:** Convert the list of $(u,v)$ points into $(x,y,z)$ coordinates using your surface parametrization function from step 2.
-7.  **Visualize:** Use Pangolin (or your chosen graphics library) to first draw a mesh of the surface by sampling many $(u,v)$ points. Then, draw the list of 3D geodesic points as a connected line strip on top of the surface.
+Geodesic is a great‑circle arc. Let $\hat a,\hat b$ be unit vectors and $\theta=\arccos(\hat a\cdot \hat b)$. Then:
+$$\gamma(t)=\frac{\sin((1-t)\theta)}{\sin\theta}\hat a + \frac{\sin(t\theta)}{\sin\theta}\hat b$$
 
-This project is a perfect way to bring the abstract concepts of differential geometry to life. Good luck with your report!
+#### Torus / Saddle (Numerical Geodesics)
+
+For torus and saddle, we integrate the geodesic ODE in parameter coordinates $(u,v)$ using a shooting method + RK4:
+
+$$
+\frac{d^2 x^k}{dt^2} + \sum_{i,j}\Gamma^k_{ij}\frac{dx^i}{dt}\frac{dx^j}{dt} = 0
+$$
+
+where the Christoffel symbols $\Gamma^k_{ij}$ are derived from the surface metric.
+
+Implementation: [analytics.hpp](analytics.hpp)
+
+## Current Limitations
+
+### No Analytic Geodesics on Arbitrary Meshes
+
+The analytic solver only works for a small set of parametric surfaces. It does **not** compute geodesics on irregular meshes like the Stanford bunny.
+
+### Why the Heat Method Is Needed
+
+For general triangle meshes, the standard approach is the **Heat Method** (see [1]).
+
+The idea:
+
+1. Solve the heat equation for a short time $t$.
+2. Normalize the temperature gradient to get a vector field $X$.
+3. Solve a Poisson equation $\Delta \phi = \nabla\cdot X$.
+4. $\phi$ approximates geodesic distance; follow its gradient to extract a path.
+
+This method is fast, robust, and works on **any** triangle mesh, which is why it’s the right next step for bunny and other irregular models.
+
+## Project Files (Key Pieces)
+
+- C++ engine: [main.cpp](main.cpp)
+- Analytic solver: [analytics.hpp](analytics.hpp)
+- Go API server: [backend/main.go](backend/main.go)
+- React + Three.js UI: [frontend/src/App.tsx](frontend/src/App.tsx)
+- Renderer: [frontend/components/GeodesicMesh.tsx](frontend/components/GeodesicMesh.tsx)
+
+## References
+
+[1] [Crane, K., Weischedel, C. and Wardetzky, M. (2013). _Geodesics in heat: A new approach to computing distance based on heat flow_. ACM Transactions on Graphics, 32(5), pp.1–11.](https://www.cs.cmu.edu/~kmcrane/Projects/HeatMethod/paperCACM.pdf)

@@ -31,3 +31,4 @@ l 5 8 1 2 4 9
 
 Reference: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
+https://20k.github.io/c++/2024/05/31/schwarzschild.html#step-1-the-metric-tensor

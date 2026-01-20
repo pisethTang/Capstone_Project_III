@@ -9,10 +9,26 @@ type ParsedObj = {
 
 type DijkstraJson = {
     inputFileName?: string;
-    totalDistance: number;
+    reachable?: boolean;
+    totalDistance: number | null;
     path: number[];
     allDistances: number[];
 };
+
+type AnalyticsJson = {
+    inputFileName?: string;
+    startId: number;
+    endId: number;
+    surfaceType: string;
+    error?: string;
+    curves: Array<{
+        name: string;
+        length: number;
+        points: number[][]; // [[x,y,z],...]
+    }>;
+};
+
+type HeatJson = AnalyticsJson;
 
 function parseObj(objText: string): ParsedObj {
     const vertices: THREE.Vector3[] = [];
@@ -83,19 +99,31 @@ function parseObj(objText: string): ParsedObj {
 export default function GeodesicMesh({
     modelPath,
     version,
+    analyticsVersion,
+    heatVersion,
     startId,
     endId,
     modelUp = "z",
+    showDijkstraPath = true,
+    showAnalyticsPath = true,
+    showHeatPath = true,
     onVertexCountChange,
     onMeshStatsChange,
     highlightFaceIndex,
     onDijkstraResultChange,
+    onAnalyticsResultChange,
+    onHeatResultChange,
 }: {
     modelPath: string;
     version: number;
+    analyticsVersion: number;
+    heatVersion: number;
     startId: number;
     endId: number;
     modelUp?: "y" | "z";
+    showDijkstraPath?: boolean;
+    showAnalyticsPath?: boolean;
+    showHeatPath?: boolean;
     onVertexCountChange?: (count: number) => void;
     onMeshStatsChange?: (stats: {
         vertexCount: number;
@@ -109,8 +137,26 @@ export default function GeodesicMesh({
             pathLength: number;
         } | null,
     ) => void;
+    onAnalyticsResultChange?: (
+        result: {
+            surfaceType: string;
+            curveCount: number;
+            totalLength: number;
+            error?: string;
+        } | null,
+    ) => void;
+    onHeatResultChange?: (
+        result: {
+            surfaceType: string;
+            curveCount: number;
+            totalLength: number;
+            error?: string;
+        } | null,
+    ) => void;
 }) {
     const pathInstancedRef = useRef<THREE.InstancedMesh>(null);
+    const analyticsInstancedRef = useRef<THREE.InstancedMesh>(null);
+    const heatInstancedRef = useRef<THREE.InstancedMesh>(null);
 
     const modelRotation = useMemo(() => {
         // Our scene is Z-up. If a model was authored Y-up (common for some assets like the bunny),
@@ -123,8 +169,14 @@ export default function GeodesicMesh({
     const [objData, setObjData] = useState<ParsedObj | null>(null);
 
     const [pathData, setPathData] = useState<DijkstraJson | null>(null);
+    const [analyticsData, setAnalyticsData] = useState<AnalyticsJson | null>(
+        null,
+    );
+    const [heatData, setHeatData] = useState<HeatJson | null>(null);
 
     const activePathData = version === 0 ? null : pathData;
+    const activeAnalyticsData = analyticsVersion === 0 ? null : analyticsData;
+    const activeHeatData = heatVersion === 0 ? null : heatData;
 
     useEffect(() => {
         if (version === 0) return;
@@ -147,8 +199,54 @@ export default function GeodesicMesh({
     }, [modelPath, version]); // Re-fetch data if the model changes
 
     useEffect(() => {
+        if (analyticsVersion === 0) return;
+
+        let cancelled = false;
+        fetch(`/analytics.json?v=${Date.now()}`)
+            .then((res) => res.json())
+            .then((data: AnalyticsJson) => {
+                if (cancelled) return;
+                setAnalyticsData(data);
+            })
+            .catch(() => {
+                // Leave existing analyticsData as-is; activeAnalyticsData gates rendering.
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [modelPath, analyticsVersion]);
+
+    useEffect(() => {
+        if (heatVersion === 0) return;
+
+        let cancelled = false;
+        fetch(`/heat_result.json?v=${Date.now()}`)
+            .then((res) => res.json())
+            .then((data: HeatJson) => {
+                if (cancelled) return;
+                setHeatData(data);
+            })
+            .catch(() => {
+                // Leave existing heatData as-is; activeHeatData gates rendering.
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [modelPath, heatVersion]);
+
+    useEffect(() => {
         if (!onDijkstraResultChange) return;
         if (!activePathData) {
+            onDijkstraResultChange(null);
+            return;
+        }
+
+        if (
+            activePathData.reachable === false ||
+            activePathData.totalDistance == null
+        ) {
             onDijkstraResultChange(null);
             return;
         }
@@ -158,6 +256,46 @@ export default function GeodesicMesh({
             pathLength: activePathData.path?.length ?? 0,
         });
     }, [activePathData, onDijkstraResultChange]);
+
+    useEffect(() => {
+        if (!onAnalyticsResultChange) return;
+        if (!activeAnalyticsData) {
+            onAnalyticsResultChange(null);
+            return;
+        }
+
+        const curves = activeAnalyticsData.curves ?? [];
+        const totalLength = curves.reduce((acc, c) => {
+            const v = Number(c.length);
+            return Number.isFinite(v) ? acc + v : acc;
+        }, 0);
+        onAnalyticsResultChange({
+            surfaceType: activeAnalyticsData.surfaceType,
+            curveCount: activeAnalyticsData.curves?.length ?? 0,
+            totalLength,
+            error: activeAnalyticsData.error,
+        });
+    }, [activeAnalyticsData, onAnalyticsResultChange]);
+
+    useEffect(() => {
+        if (!onHeatResultChange) return;
+        if (!activeHeatData) {
+            onHeatResultChange(null);
+            return;
+        }
+
+        const curves = activeHeatData.curves ?? [];
+        const totalLength = curves.reduce((acc, c) => {
+            const v = Number(c.length);
+            return Number.isFinite(v) ? acc + v : acc;
+        }, 0);
+        onHeatResultChange({
+            surfaceType: activeHeatData.surfaceType,
+            curveCount: activeHeatData.curves?.length ?? 0,
+            totalLength,
+            error: activeHeatData.error,
+        });
+    }, [activeHeatData, onHeatResultChange]);
 
     useEffect(() => {
         let cancelled = false;
@@ -305,6 +443,8 @@ export default function GeodesicMesh({
         const ids = activePathData.path;
         if (!ids || ids.length < 2) return [] as THREE.Matrix4[];
 
+        const sphereLike = /sphere/i.test(modelPath);
+
         const up = new THREE.Vector3(0, 1, 0);
         const p1 = new THREE.Vector3();
         const p2 = new THREE.Vector3();
@@ -315,6 +455,62 @@ export default function GeodesicMesh({
         const matrix = new THREE.Matrix4();
 
         const out: THREE.Matrix4[] = [];
+
+        // Estimate a radius for sphere-like models (in normalized/world units).
+        // This helps keep interpolated segments on the surface.
+        let sphereRadius = 1.0;
+        if (sphereLike) {
+            let sum = 0;
+            let count = 0;
+            for (
+                let i = 0;
+                i < posAttr.count;
+                i += Math.max(1, Math.floor(posAttr.count / 5000))
+            ) {
+                const x = Number(pos[i * 3]);
+                const y = Number(pos[i * 3 + 1]);
+                const z = Number(pos[i * 3 + 2]);
+                const r = Math.sqrt(x * x + y * y + z * z);
+                if (Number.isFinite(r) && r > 1e-6) {
+                    sum += r;
+                    count++;
+                }
+            }
+            if (count > 0) sphereRadius = sum / count;
+        }
+
+        const slerpOnSphere = (
+            a: THREE.Vector3,
+            b: THREE.Vector3,
+            t: number,
+        ) => {
+            const an = a.clone().normalize();
+            const bn = b.clone().normalize();
+            const dot = THREE.MathUtils.clamp(an.dot(bn), -1, 1);
+            const theta = Math.acos(dot);
+            const sinTheta = Math.sin(theta);
+            if (sinTheta < 1e-6 || !Number.isFinite(sinTheta)) {
+                return an.lerp(bn, t).normalize().multiplyScalar(sphereRadius);
+            }
+            const w1 = Math.sin((1 - t) * theta) / sinTheta;
+            const w2 = Math.sin(t * theta) / sinTheta;
+            return an
+                .multiplyScalar(w1)
+                .add(bn.multiplyScalar(w2))
+                .multiplyScalar(sphereRadius);
+        };
+
+        const addSegment = (a: THREE.Vector3, b: THREE.Vector3) => {
+            dir.subVectors(b, a);
+            const length = dir.length();
+            if (length <= 1e-9) return;
+            mid.addVectors(a, b).multiplyScalar(0.5);
+            quat.setFromUnitVectors(up, dir.normalize());
+            scale.set(1, length, 1);
+            matrix.compose(mid, quat, scale);
+            out.push(matrix.clone());
+        };
+
         for (let i = 0; i < ids.length - 1; i++) {
             const a = ids[i];
             const b = ids[i + 1];
@@ -330,30 +526,145 @@ export default function GeodesicMesh({
                 Number(pos[b * 3 + 2]),
             );
 
-            dir.subVectors(p2, p1);
-            const length = dir.length();
-            if (length <= 1e-9) continue;
+            if (!sphereLike) {
+                addSegment(p1, p2);
+                continue;
+            }
 
-            mid.addVectors(p1, p2).multiplyScalar(0.5);
-            quat.setFromUnitVectors(up, dir.normalize());
+            // Subdivide each hop so it visually follows the sphere surface.
+            const an = p1.clone().normalize();
+            const bn = p2.clone().normalize();
+            const dot = THREE.MathUtils.clamp(an.dot(bn), -1, 1);
+            const theta = Math.acos(dot);
+            const steps = Math.min(
+                16,
+                Math.max(2, Math.ceil(theta / (Math.PI / 18))),
+            ); // ~10° per segment
 
-            // CylinderGeometry is built along +Y with height=1; scale Y to the segment length.
-            scale.set(1, length, 1);
-            matrix.compose(mid, quat, scale);
-            out.push(matrix.clone());
+            let prev = p1.clone().normalize().multiplyScalar(sphereRadius);
+            for (let s = 1; s <= steps; s++) {
+                const t = s / steps;
+                const next = slerpOnSphere(p1, p2, t);
+                addSegment(prev, next);
+                prev = next;
+            }
         }
+
         return out;
-    }, [activePathData, processedMesh]);
+    }, [activePathData, processedMesh, modelPath]);
 
     useEffect(() => {
         const mesh = pathInstancedRef.current;
         if (!mesh) return;
+        if (!showDijkstraPath) return;
         for (let i = 0; i < pathSegmentMatrices.length; i++) {
             mesh.setMatrixAt(i, pathSegmentMatrices[i]);
         }
         mesh.count = pathSegmentMatrices.length;
         mesh.instanceMatrix.needsUpdate = true;
-    }, [pathSegmentMatrices]);
+    }, [pathSegmentMatrices, showDijkstraPath]);
+
+    const analyticsSegmentMatrices = useMemo(() => {
+        if (!activeAnalyticsData) return [] as THREE.Matrix4[];
+        const curves = activeAnalyticsData.curves ?? [];
+        if (curves.length === 0) return [] as THREE.Matrix4[];
+
+        const up = new THREE.Vector3(0, 1, 0);
+        const p1 = new THREE.Vector3();
+        const p2 = new THREE.Vector3();
+        const dir = new THREE.Vector3();
+        const mid = new THREE.Vector3();
+        const quat = new THREE.Quaternion();
+        const scale = new THREE.Vector3();
+        const matrix = new THREE.Matrix4();
+
+        const out: THREE.Matrix4[] = [];
+        for (const curve of curves) {
+            const pts = curve.points ?? [];
+            if (pts.length < 2) continue;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const a = pts[i];
+                const b = pts[i + 1];
+                if (!a || !b || a.length < 3 || b.length < 3) continue;
+
+                p1.set(Number(a[0]), Number(a[1]), Number(a[2]));
+                p2.set(Number(b[0]), Number(b[1]), Number(b[2]));
+
+                dir.subVectors(p2, p1);
+                const length = dir.length();
+                if (length <= 1e-9) continue;
+
+                mid.addVectors(p1, p2).multiplyScalar(0.5);
+                quat.setFromUnitVectors(up, dir.normalize());
+                scale.set(1, length, 1);
+                matrix.compose(mid, quat, scale);
+                out.push(matrix.clone());
+            }
+        }
+        return out;
+    }, [activeAnalyticsData]);
+
+    const heatSegmentMatrices = useMemo(() => {
+        if (!activeHeatData) return [] as THREE.Matrix4[];
+        const curves = activeHeatData.curves ?? [];
+        if (curves.length === 0) return [] as THREE.Matrix4[];
+
+        const up = new THREE.Vector3(0, 1, 0);
+        const p1 = new THREE.Vector3();
+        const p2 = new THREE.Vector3();
+        const dir = new THREE.Vector3();
+        const mid = new THREE.Vector3();
+        const quat = new THREE.Quaternion();
+        const scale = new THREE.Vector3();
+        const matrix = new THREE.Matrix4();
+
+        const out: THREE.Matrix4[] = [];
+        for (const curve of curves) {
+            const pts = curve.points ?? [];
+            if (pts.length < 2) continue;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const a = pts[i];
+                const b = pts[i + 1];
+                if (!a || !b || a.length < 3 || b.length < 3) continue;
+
+                p1.set(Number(a[0]), Number(a[1]), Number(a[2]));
+                p2.set(Number(b[0]), Number(b[1]), Number(b[2]));
+
+                dir.subVectors(p2, p1);
+                const length = dir.length();
+                if (length <= 1e-9) continue;
+
+                mid.addVectors(p1, p2).multiplyScalar(0.5);
+                quat.setFromUnitVectors(up, dir.normalize());
+                scale.set(1, length, 1);
+                matrix.compose(mid, quat, scale);
+                out.push(matrix.clone());
+            }
+        }
+        return out;
+    }, [activeHeatData]);
+
+    useEffect(() => {
+        const mesh = analyticsInstancedRef.current;
+        if (!mesh) return;
+        if (!showAnalyticsPath) return;
+        for (let i = 0; i < analyticsSegmentMatrices.length; i++) {
+            mesh.setMatrixAt(i, analyticsSegmentMatrices[i]);
+        }
+        mesh.count = analyticsSegmentMatrices.length;
+        mesh.instanceMatrix.needsUpdate = true;
+    }, [analyticsSegmentMatrices, showAnalyticsPath]);
+
+    useEffect(() => {
+        const mesh = heatInstancedRef.current;
+        if (!mesh) return;
+        if (!showHeatPath) return;
+        for (let i = 0; i < heatSegmentMatrices.length; i++) {
+            mesh.setMatrixAt(i, heatSegmentMatrices[i]);
+        }
+        mesh.count = heatSegmentMatrices.length;
+        mesh.instanceMatrix.needsUpdate = true;
+    }, [heatSegmentMatrices, showHeatPath]);
 
     const meshEdgeScale = useMemo(() => {
         if (!processedMesh) {
@@ -512,7 +823,7 @@ export default function GeodesicMesh({
             )}
 
             {/* The dijkstra path (straight segments, slightly thicker than edges) */}
-            {pathSegmentMatrices.length > 0 && (
+            {showDijkstraPath && pathSegmentMatrices.length > 0 && (
                 <instancedMesh
                     ref={pathInstancedRef}
                     args={[undefined, undefined, pathSegmentMatrices.length]}
@@ -535,6 +846,64 @@ export default function GeodesicMesh({
                         polygonOffset
                         polygonOffsetFactor={-2}
                         polygonOffsetUnits={-2}
+                    />
+                </instancedMesh>
+            )}
+
+            {/* Analytics geodesic(s) (yellow) */}
+            {showAnalyticsPath && analyticsSegmentMatrices.length > 0 && (
+                <instancedMesh
+                    ref={analyticsInstancedRef}
+                    args={[
+                        undefined,
+                        undefined,
+                        analyticsSegmentMatrices.length,
+                    ]}
+                    renderOrder={11}
+                    frustumCulled={false}
+                >
+                    <cylinderGeometry
+                        args={[
+                            meshEdgeScale.pathRadius * 0.9,
+                            meshEdgeScale.pathRadius * 0.9,
+                            1,
+                            10,
+                        ]}
+                    />
+                    <meshBasicMaterial
+                        color="#ffe100"
+                        depthWrite={false}
+                        depthTest
+                        polygonOffset
+                        polygonOffsetFactor={-3}
+                        polygonOffsetUnits={-3}
+                    />
+                </instancedMesh>
+            )}
+
+            {/* Heat method geodesic (cyan) */}
+            {showHeatPath && heatSegmentMatrices.length > 0 && (
+                <instancedMesh
+                    ref={heatInstancedRef}
+                    args={[undefined, undefined, heatSegmentMatrices.length]}
+                    renderOrder={12}
+                    frustumCulled={false}
+                >
+                    <cylinderGeometry
+                        args={[
+                            meshEdgeScale.pathRadius * 0.85,
+                            meshEdgeScale.pathRadius * 0.85,
+                            1,
+                            10,
+                        ]}
+                    />
+                    <meshBasicMaterial
+                        color="#00e5ff"
+                        depthWrite={false}
+                        depthTest
+                        polygonOffset
+                        polygonOffsetFactor={-4}
+                        polygonOffsetUnits={-4}
                     />
                 </instancedMesh>
             )}

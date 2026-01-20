@@ -72,5 +72,85 @@ func main() {
 		c.JSON(200, gin.H{"status": "success"})
 	})
 
+	r.POST("/analytics", func(c *gin.Context) {
+		var req struct {
+			Start int    `json:"start"`
+			End   int    `json:"end"`
+			Model string `json:"model"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		wd, err := os.Getwd()
+		if err != nil {
+			c.JSON(500, gin.H{"error": "failed to determine working directory"})
+			return
+		}
+		projectRoot := filepath.Clean(filepath.Join(wd, ".."))
+
+		modelName := filepath.Base(strings.ReplaceAll(req.Model, "\\", "/"))
+		modelPath := filepath.Join(projectRoot, "frontend", "public", "data", modelName)
+		enginePath := filepath.Join(projectRoot, "main")
+
+		cmd := exec.Command(enginePath, fmt.Sprint(req.Start), fmt.Sprint(req.End), modelPath, "analytics")
+		cmd.Dir = projectRoot
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			msg := strings.TrimSpace(string(output))
+			if msg == "" {
+				msg = err.Error()
+			}
+			c.JSON(500, gin.H{
+				"error":     msg,
+				"modelPath": modelPath,
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{"status": "success"})
+	})
+
+	r.POST("/heat", func(c *gin.Context) {
+		var req struct {
+			Start int    `json:"start"`
+			End   int    `json:"end"`
+			Model string `json:"model"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		wd, err := os.Getwd()
+		if err != nil {
+			c.JSON(500, gin.H{"error": "failed to determine working directory"})
+			return
+		}
+		projectRoot := filepath.Clean(filepath.Join(wd, ".."))
+
+		modelName := filepath.Base(strings.ReplaceAll(req.Model, "\\", "/"))
+		modelPath := filepath.Join(projectRoot, "frontend", "public", "data", modelName)
+		enginePath := filepath.Join(projectRoot, "main")
+
+		cmd := exec.Command(enginePath, fmt.Sprint(req.Start), fmt.Sprint(req.End), modelPath, "heat")
+		cmd.Dir = projectRoot
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			msg := strings.TrimSpace(string(output))
+			if msg == "" {
+				msg = err.Error()
+			}
+			c.JSON(500, gin.H{
+				"error":     msg,
+				"modelPath": modelPath,
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{"status": "success"})
+	})
+
 	r.Run(":8080")
 }
