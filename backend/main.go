@@ -17,16 +17,23 @@ func main() {
 
 	// Allow the Vite dev server (and localhost variants) to call this API.
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://localhost:5173",
-			"http://127.0.0.1:5173",
-			"http://localhost:3000",
-			"http://127.0.0.1:3000",
-		},
-		AllowMethods: []string{"POST", "OPTIONS"},
-		AllowHeaders: []string{"Content-Type"},
-		MaxAge:       12 * time.Hour,
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"POST", "OPTIONS"},
+		AllowHeaders:    []string{"Content-Type"},
+		MaxAge:          12 * time.Hour,
 	}))
+
+	resolveProjectRoot := func() (string, error) {
+		if exe, err := os.Executable(); err == nil {
+			exeDir := filepath.Dir(exe)
+			return filepath.Clean(filepath.Join(exeDir, "..")), nil
+		}
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Clean(filepath.Join(wd, "..")), nil
+	}
 
 	r.POST("/compute", func(c *gin.Context) {
 		var req struct {
@@ -39,13 +46,11 @@ func main() {
 			return
 		}
 
-		// Resolve project root (assumes backend server is started from backend/).
-		wd, err := os.Getwd()
+		projectRoot, err := resolveProjectRoot()
 		if err != nil {
-			c.JSON(500, gin.H{"error": "failed to determine working directory"})
+			c.JSON(500, gin.H{"error": "failed to determine project root"})
 			return
 		}
-		projectRoot := filepath.Clean(filepath.Join(wd, ".."))
 
 		// Only allow selecting a file name (prevents path traversal like ../../etc/passwd).
 		modelName := filepath.Base(strings.ReplaceAll(req.Model, "\\", "/"))
@@ -69,7 +74,14 @@ func main() {
 			return
 		}
 
-		c.JSON(200, gin.H{"status": "success"})
+		resultPath := filepath.Join(projectRoot, "frontend", "public", "result.json")
+		payload, err := os.ReadFile(resultPath)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "failed to read result.json"})
+			return
+		}
+
+		c.Data(200, "application/json", payload)
 	})
 
 	r.POST("/analytics", func(c *gin.Context) {
@@ -83,12 +95,11 @@ func main() {
 			return
 		}
 
-		wd, err := os.Getwd()
+		projectRoot, err := resolveProjectRoot()
 		if err != nil {
-			c.JSON(500, gin.H{"error": "failed to determine working directory"})
+			c.JSON(500, gin.H{"error": "failed to determine project root"})
 			return
 		}
-		projectRoot := filepath.Clean(filepath.Join(wd, ".."))
 
 		modelName := filepath.Base(strings.ReplaceAll(req.Model, "\\", "/"))
 		modelPath := filepath.Join(projectRoot, "frontend", "public", "data", modelName)
@@ -109,7 +120,14 @@ func main() {
 			return
 		}
 
-		c.JSON(200, gin.H{"status": "success"})
+		resultPath := filepath.Join(projectRoot, "frontend", "public", "analytics.json")
+		payload, err := os.ReadFile(resultPath)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "failed to read analytics.json"})
+			return
+		}
+
+		c.Data(200, "application/json", payload)
 	})
 
 	r.POST("/heat", func(c *gin.Context) {
@@ -123,12 +141,11 @@ func main() {
 			return
 		}
 
-		wd, err := os.Getwd()
+		projectRoot, err := resolveProjectRoot()
 		if err != nil {
-			c.JSON(500, gin.H{"error": "failed to determine working directory"})
+			c.JSON(500, gin.H{"error": "failed to determine project root"})
 			return
 		}
-		projectRoot := filepath.Clean(filepath.Join(wd, ".."))
 
 		modelName := filepath.Base(strings.ReplaceAll(req.Model, "\\", "/"))
 		modelPath := filepath.Join(projectRoot, "frontend", "public", "data", modelName)
@@ -149,8 +166,19 @@ func main() {
 			return
 		}
 
-		c.JSON(200, gin.H{"status": "success"})
+		resultPath := filepath.Join(projectRoot, "frontend", "public", "heat_result.json")
+		payload, err := os.ReadFile(resultPath)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "failed to read heat_result.json"})
+			return
+		}
+
+		c.Data(200, "application/json", payload)
 	})
 
-	r.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	r.Run(":" + port)
 }

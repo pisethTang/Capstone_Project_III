@@ -98,9 +98,9 @@ function parseObj(objText: string): ParsedObj {
 
 export default function GeodesicMesh({
     modelPath,
-    version,
-    analyticsVersion,
-    heatVersion,
+    dijkstraData,
+    analyticsData,
+    heatData,
     startId,
     endId,
     modelUp = "z",
@@ -115,9 +115,9 @@ export default function GeodesicMesh({
     onHeatResultChange,
 }: {
     modelPath: string;
-    version: number;
-    analyticsVersion: number;
-    heatVersion: number;
+    dijkstraData: DijkstraJson | null;
+    analyticsData: AnalyticsJson | null;
+    heatData: HeatJson | null;
     startId: number;
     endId: number;
     modelUp?: "y" | "z";
@@ -168,73 +168,9 @@ export default function GeodesicMesh({
 
     const [objData, setObjData] = useState<ParsedObj | null>(null);
 
-    const [pathData, setPathData] = useState<DijkstraJson | null>(null);
-    const [analyticsData, setAnalyticsData] = useState<AnalyticsJson | null>(
-        null,
-    );
-    const [heatData, setHeatData] = useState<HeatJson | null>(null);
-
-    const activePathData = version === 0 ? null : pathData;
-    const activeAnalyticsData = analyticsVersion === 0 ? null : analyticsData;
-    const activeHeatData = heatVersion === 0 ? null : heatData;
-
-    useEffect(() => {
-        if (version === 0) return;
-
-        let cancelled = false;
-        // We assume the result.json updates whenever you run the C++ engine
-        fetch(`/result.json?v=${Date.now()}`)
-            .then((res) => res.json())
-            .then((data: DijkstraJson) => {
-                if (cancelled) return;
-                setPathData(data);
-            })
-            .catch(() => {
-                // Leave existing pathData as-is; activePathData gates rendering.
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [modelPath, version]); // Re-fetch data if the model changes
-
-    useEffect(() => {
-        if (analyticsVersion === 0) return;
-
-        let cancelled = false;
-        fetch(`/analytics.json?v=${Date.now()}`)
-            .then((res) => res.json())
-            .then((data: AnalyticsJson) => {
-                if (cancelled) return;
-                setAnalyticsData(data);
-            })
-            .catch(() => {
-                // Leave existing analyticsData as-is; activeAnalyticsData gates rendering.
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [modelPath, analyticsVersion]);
-
-    useEffect(() => {
-        if (heatVersion === 0) return;
-
-        let cancelled = false;
-        fetch(`/heat_result.json?v=${Date.now()}`)
-            .then((res) => res.json())
-            .then((data: HeatJson) => {
-                if (cancelled) return;
-                setHeatData(data);
-            })
-            .catch(() => {
-                // Leave existing heatData as-is; activeHeatData gates rendering.
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [modelPath, heatVersion]);
+    const activePathData = dijkstraData;
+    const activeAnalyticsData = analyticsData;
+    const activeHeatData = heatData;
 
     useEffect(() => {
         if (!onDijkstraResultChange) return;

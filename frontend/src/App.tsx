@@ -18,6 +18,29 @@ const MODELS = [
     { name: "Saddle", file: "saddle.obj" }, // hyperbolic paraboloid (pringle-shaped)
 ];
 
+type DijkstraJson = {
+    inputFileName?: string;
+    reachable?: boolean;
+    totalDistance: number | null;
+    path: number[];
+    allDistances: number[];
+};
+
+type AnalyticsJson = {
+    inputFileName?: string;
+    startId: number;
+    endId: number;
+    surfaceType: string;
+    error?: string;
+    curves: Array<{
+        name: string;
+        length: number;
+        points: number[][];
+    }>;
+};
+
+type HeatJson = AnalyticsJson;
+
 export default function App() {
     const [modelFile, setModelFile] = useState(MODELS[0].file);
     const [startId, setStartId] = useState(0);
@@ -25,9 +48,13 @@ export default function App() {
     const [loading, setLoading] = useState(false);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
     // const [heatLoading, setHeatLoading] = useState(false);
-    const [version, setVersion] = useState(0);
-    const [analyticsVersion, setAnalyticsVersion] = useState(0);
-    const [heatVersion, setHeatVersion] = useState(0);
+    const [dijkstraData, setDijkstraData] = useState<DijkstraJson | null>(
+        null,
+    );
+    const [analyticsData, setAnalyticsData] = useState<AnalyticsJson | null>(
+        null,
+    );
+    const [heatData, setHeatData] = useState<HeatJson | null>(null);
     const [vertexCount, setVertexCount] = useState<number | null>(null);
     const [faceCount, setFaceCount] = useState<number | null>(null);
     const [showAxes, setShowAxes] = useState(true);
@@ -41,6 +68,10 @@ export default function App() {
     const [showDijkstraPath, setShowDijkstraPath] = useState(true);
     const [showAnalyticsPath, setShowAnalyticsPath] = useState(true);
     const [showHeatPath, setShowHeatPath] = useState(true);
+
+    const apiBase =
+        import.meta.env.VITE_API_BASE?.replace(/\/$/, "") ??
+        "http://localhost:8080";
 
     const controlsRef = useRef<OrbitControlsImpl | null>(null);
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -113,47 +144,51 @@ export default function App() {
     const handleCompute = async () => {
         setLoading(true);
         setTotalDistance(null);
+        setDijkstraData(null);
         const data = {
             start: startId,
             end: endId,
             model: modelFile,
         };
         try {
-            const response = await fetch("http://localhost:8080/compute", {
+            const response = await fetch(`${apiBase}/compute`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
 
             if (response.ok) {
-                // trigger a re-render in GeodesicMesh by updating a key or ref
-                setVersion((v) => v + 1); // triggers the useEffect in GeoedesicMesh
-                setLoading(false);
+                const payload = (await response.json()) as DijkstraJson;
+                setDijkstraData(payload);
             } else {
                 console.error("ERROR Response: ", response);
             }
         } catch (error) {
             console.error("Failed to send POST: ", error);
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleAnalytics = async () => {
         setAnalyticsLoading(true);
         setAnalyticsLength(null);
+        setAnalyticsData(null);
         const data = {
             start: startId,
             end: endId,
             model: modelFile,
         };
         try {
-            const response = await fetch("http://localhost:8080/analytics", {
+            const response = await fetch(`${apiBase}/analytics`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
 
             if (response.ok) {
-                setAnalyticsVersion((v) => v + 1);
+                const payload = (await response.json()) as AnalyticsJson;
+                setAnalyticsData(payload);
             } else {
                 console.error("ERROR Response: ", response);
             }
@@ -167,20 +202,22 @@ export default function App() {
     // const handleHeat = async () => {
     //     setHeatLoading(true);
     //     setHeatLength(null);
+    //     setHeatData(null);
     //     const data = {
     //         start: startId,
     //         end: endId,
     //         model: modelFile,
     //     };
     //     try {
-    //         const response = await fetch("http://localhost:8080/heat", {
+    //         const response = await fetch(`${apiBase}/heat`, {
     //             method: "POST",
     //             headers: { "Content-Type": "application/json" },
     //             body: JSON.stringify(data),
     //         });
 
     //         if (response.ok) {
-    //             setHeatVersion((v) => v + 1);
+    //             const payload = (await response.json()) as HeatJson;
+    //             setHeatData(payload);
     //         } else {
     //             console.error("ERROR Response: ", response);
     //         }
@@ -247,9 +284,9 @@ export default function App() {
                     value={modelFile}
                     onChange={(e) => {
                         setModelFile(e.target.value);
-                        setVersion(0); // hides the red line
-                        setAnalyticsVersion(0); // hides the yellow line
-                        setHeatVersion(0); // hides the heat line
+                        setDijkstraData(null); // hides the red line
+                        setAnalyticsData(null); // hides the yellow line
+                        setHeatData(null); // hides the heat line
                         setStartId(0); // reset inputs
                         setEndId(1);
                         setHighlightEnabled(false);
@@ -537,9 +574,9 @@ export default function App() {
                 <Suspense fallback={null}>
                     <GeodesicMesh
                         modelPath={`/data/${modelFile}`}
-                        version={version}
-                        analyticsVersion={analyticsVersion}
-                        heatVersion={heatVersion}
+                        dijkstraData={dijkstraData}
+                        analyticsData={analyticsData}
+                        heatData={heatData}
                         startId={startId}
                         endId={endId}
                         modelUp={selectedModel.up}
