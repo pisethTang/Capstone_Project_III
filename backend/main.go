@@ -176,6 +176,11 @@ func main() {
 		c.Data(200, "application/json", payload)
 	})
 
+	// health endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
