@@ -17,7 +17,6 @@ This project computes and visualizes shortest‑path approximations on 3D meshes
 - Mesh generation tools (Python): [tools](tools)
 - Assets (images): [assets](assets)
 
-Structure notes: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
 ## Build & Run (Dev)
 
