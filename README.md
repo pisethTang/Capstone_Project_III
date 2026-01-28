@@ -1,9 +1,46 @@
 # Geodesic Lab
 
 
-![alt text](image.png)
+![alt text](assets/image.png)
 
 This project computes and visualizes shortest‑path approximations on 3D meshes using a C++ engine, a Go API server, and a React + Three.js frontend.
+
+## Project Layout (High-Level)
+
+- C++ engine (core algorithms):
+    - [engine/src/main.cpp](engine/src/main.cpp) entry point
+    - [engine/include/mesh_engine.hpp](engine/include/mesh_engine.hpp) / [engine/src/mesh_engine.cpp](engine/src/mesh_engine.cpp) mesh loader + Dijkstra
+    - [engine/include/analytics.hpp](engine/include/analytics.hpp) analytic + heat method solver (header-style)
+    - [engine/include/common.hpp](engine/include/common.hpp) shared math + helpers
+- Go API server: [backend](backend)
+- Frontend (React + Three.js): [frontend](frontend)
+- Mesh generation tools (Python): [tools](tools)
+- Assets (images): [assets](assets)
+
+Structure notes: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+
+## Build & Run (Dev)
+
+### 1) Build the C++ engine
+
+```bash
+g++ -std=c++17 -O2 engine/src/main.cpp engine/src/mesh_engine.cpp -Iengine/include -o engine/bin/main
+```
+
+### 2) Start the Go API
+
+```bash
+cd backend
+go run .
+```
+
+### 3) Start the React UI
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ## System Flow (End‑to‑End)
 
@@ -11,7 +48,7 @@ This project computes and visualizes shortest‑path approximations on 3D meshes
 
 1. You click **Run Dijkstra** in the UI.
 2. The React app sends a POST request to the Go server at /compute.
-3. The Go server runs the C++ engine binary in [main.cpp](main.cpp) with arguments: startId, endId, model path.
+3. The Go server runs the C++ engine binary at engine/bin/main (built from [engine/src/main.cpp](engine/src/main.cpp)) with arguments: startId, endId, model path.
 4. The C++ engine loads the OBJ, builds a graph, runs Dijkstra, and writes result.json.
 5. The React app fetches result.json and renders the path in red.
 
@@ -20,7 +57,7 @@ This project computes and visualizes shortest‑path approximations on 3D meshes
 1. You click **Run Analytics** in the UI.
 2. The React app sends a POST request to the Go server at /analytics.
 3. The Go server runs the C++ engine with mode analytics.
-4. The C++ engine calls the analytic solver in [analytics.hpp](analytics.hpp) and writes analytics.json.
+4. The C++ engine calls the analytic solver in [engine/include/analytics.hpp](engine/include/analytics.hpp) and writes analytics.json.
 5. The React app fetches analytics.json and renders the path in yellow.
 
 ### Diagram
@@ -33,13 +70,13 @@ sequenceDiagram
     participant FS as frontend/public/*.json
 
     UI->>API: POST /compute {start,end,model}
-    API->>CPP: exec ./main start end model
+    API->>CPP: exec ./engine/bin/main start end model
     CPP->>FS: write result.json
     UI->>FS: fetch result.json
     UI->>UI: render Dijkstra path (red)
 
     UI->>API: POST /analytics {start,end,model}
-    API->>CPP: exec ./main start end model analytics
+    API->>CPP: exec ./engine/bin/main start end model analytics
     CPP->>FS: write analytics.json
     UI->>FS: fetch analytics.json
     UI->>UI: render analytic path (yellow)
@@ -59,11 +96,11 @@ $$
 
 The path is then recovered by parent pointers.
 
-Implementation: [main.cpp](main.cpp)
+Implementation: [engine/src/main.cpp](engine/src/main.cpp), [engine/src/mesh_engine.cpp](engine/src/mesh_engine.cpp)
 
 ### 2) Analytic Geodesics (Parametric Surfaces)
 
-The analytic solver in [analytics.hpp](analytics.hpp) uses closed‑form or ODE solutions for special surfaces:
+The analytic solver in [engine/include/analytics.hpp](engine/include/analytics.hpp) uses closed‑form or ODE solutions for special surfaces:
 
 #### Plane
 
@@ -85,7 +122,7 @@ $$
 
 where the Christoffel symbols $\Gamma^k_{ij}$ are derived from the surface metric.
 
-Implementation: [analytics.hpp](analytics.hpp)
+Implementation: [engine/include/analytics.hpp](engine/include/analytics.hpp)
 
 ## Current Limitations
 
@@ -108,8 +145,8 @@ This method is fast, robust, and works on **any** triangle mesh, which is why it
 
 ## Project Files (Key Pieces)
 
-- C++ engine: [main.cpp](main.cpp)
-- Analytic solver: [analytics.hpp](analytics.hpp)
+- C++ engine: [engine/src/main.cpp](engine/src/main.cpp), [engine/include/mesh_engine.hpp](engine/include/mesh_engine.hpp), [engine/src/mesh_engine.cpp](engine/src/mesh_engine.cpp)
+- Analytic solver: [engine/include/analytics.hpp](engine/include/analytics.hpp)
 - Go API server: [backend/main.go](backend/main.go)
 - React + Three.js UI: [frontend/src/App.tsx](frontend/src/App.tsx)
 - Renderer: [frontend/components/GeodesicMesh.tsx](frontend/components/GeodesicMesh.tsx)

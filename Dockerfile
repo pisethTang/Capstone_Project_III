@@ -11,7 +11,7 @@ RUN cd backend && go mod download
 
 COPY . .
 
-RUN g++ -O2 -std=c++17 -o /app/main /app/main.cpp
+RUN g++ -O2 -std=c++17 -I/app/engine/include -o /app/engine/bin/main /app/engine/src/main.cpp /app/engine/src/mesh_engine.cpp
 RUN cd backend && go build -o /app/backend/app .
 
 FROM debian:bookworm-slim
@@ -22,7 +22,7 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY --from=builder /app/main /app/main
+COPY --from=builder /app/engine/bin/main /app/engine/bin/main
 COPY --from=builder /app/backend/app /app/backend/app
 COPY --from=builder /app/frontend/public /app/frontend/public
 

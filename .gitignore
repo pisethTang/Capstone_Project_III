@@ -1,6 +1,8 @@
 .vscode/
 .cache/
 build/
+engine/bin/
+frontend/node_modules/
 
 
 
