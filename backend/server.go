@@ -18,9 +18,9 @@ func setupRouter() *gin.Engine {
 		MaxAge:          12 * time.Hour,
 	}))
 
-	r.POST("/compute", handleCompute)
-	r.POST("/analytics", handleAnalytics)
-	r.POST("/heat", handleHeat)
+	r.POST("/compute_dijkstra_path", handleCompute)
+	r.POST("/compute_analytics_path", handleAnalytics)
+	r.POST("/compute_heat_path", handleHeat)
 
 	// health endpoint
 	r.GET("/health", func(c *gin.Context) {

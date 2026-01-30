@@ -140,7 +140,7 @@ export default function App() {
 
     const selectedModel = MODELS.find((m) => m.file === modelFile) ?? MODELS[0];
 
-    // Make a call to the /compute endpoint
+    // Make a call to the /compute_dijkstra_path endpoint
     const handleCompute = async () => {
         setLoading(true);
         setTotalDistance(null);
@@ -151,7 +151,7 @@ export default function App() {
             model: modelFile,
         };
         try {
-            const response = await fetch(`${apiBase}/compute`, {
+            const response = await fetch(`${apiBase}/compute_dijkstra_path`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
@@ -180,7 +180,7 @@ export default function App() {
             model: modelFile,
         };
         try {
-            const response = await fetch(`${apiBase}/analytics`, {
+            const response = await fetch(`${apiBase}/compute_analytics_path`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
@@ -198,35 +198,6 @@ export default function App() {
             setAnalyticsLoading(false);
         }
     };
-
-    // const handleHeat = async () => {
-    //     setHeatLoading(true);
-    //     setHeatLength(null);
-    //     setHeatData(null);
-    //     const data = {
-    //         start: startId,
-    //         end: endId,
-    //         model: modelFile,
-    //     };
-    //     try {
-    //         const response = await fetch(`${apiBase}/heat`, {
-    //             method: "POST",
-    //             headers: { "Content-Type": "application/json" },
-    //             body: JSON.stringify(data),
-    //         });
-
-    //         if (response.ok) {
-    //             const payload = (await response.json()) as HeatJson;
-    //             setHeatData(payload);
-    //         } else {
-    //             console.error("ERROR Response: ", response);
-    //         }
-    //     } catch (error) {
-    //         console.error("Failed to send POST: ", error);
-    //     } finally {
-    //         setHeatLoading(false);
-    //     }
-    // };
 
     const handleResetView = useCallback(() => {
         const camera = cameraRef.current;

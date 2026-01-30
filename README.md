@@ -46,7 +46,7 @@ npm run dev
 ### Run Dijkstra
 
 1. You click **Run Dijkstra** in the UI.
-2. The React app sends a POST request to the Go server at /compute.
+2. The React app sends a POST request to the Go server at /compute_dijkstra_path.
 3. The Go server runs the C++ engine binary at engine/bin/main (built from [engine/src/main.cpp](engine/src/main.cpp)) with arguments: startId, endId, model path.
 4. The C++ engine loads the OBJ, builds a graph, runs Dijkstra, and writes result.json.
 5. The React app fetches result.json and renders the path in red.
@@ -68,7 +68,7 @@ sequenceDiagram
     participant CPP as C++ Engine
     participant FS as frontend/public/*.json
 
-    UI->>API: POST /compute {start,end,model}
+    UI->>API: POST /compute_dijkstra_path {start,end,model}
     API->>CPP: exec ./engine/bin/main start end model
     CPP->>FS: write result.json
     UI->>FS: fetch result.json
