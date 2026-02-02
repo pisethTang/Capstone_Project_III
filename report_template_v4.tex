@@ -19,11 +19,39 @@
 \usepackage{lastpage}
 \usepackage{fancyhdr}
 \usepackage{url}
+\usepackage{hyperref}
+
+
+
+
+% Extra packages 
+\usepackage{xcolor}
+\usepackage[english]{babel}
+
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\newtheorem{proposition}[theorem]{Proposition}
+
+
+\newcommand{\prop}[2][]{\begin{proposition}[#1]#2\end{proposition}}
+\newcommand{\defn}[2][]{\begin{definition}[#1]#2\end{definition}}
+
 
 % PUT YOUR TITLE AND NAME HERE
-\newcommand{\titlestr}{A new title \\ Final Reports}
-\newcommand{\shorttitlestr}{A Template ...}
-\newcommand{\authorstr}{A. Student} % INSERT YOUR NAME(S)
+\newcommand{\titlestr}{Defining the Straightest Path: Theory and Computation of Geodesics in Differential Geometry \\ DRAFT}
+\newcommand{\shorttitlestr}{Geodesics}
+\newcommand{\authorstr}{Piseth Tang} % INSERT YOUR NAME(S)
 
 \begin{document}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%555
@@ -36,36 +64,11 @@
   \vspace{1cm}
   {\Large \authorstr \par}
 
-  {\bf STUDENT NO.}
+  {\bf a1906208}
 
   \vspace{1cm}
-  \today     % PUT YOUR DATE HERE
+  November 19, 2025   
 
-  \vspace{2cm}
-  Report submitted for
-  {\bf MATHS 3021}
-  at the School of Mathematical Sciences,
-  University of Adelaide
-
-  \includegraphics[width=0.35\textwidth]{UoA_logo_col_vert.jpg}
-
-  \vspace{2cm}
-  \flushleft
-  Project Area: {\bf LIST TOPIC AREA} \\
-  Project Supervisor: {\bf INSERT NAME} \\
-
-  \vspace{5mm} {\footnotesize In submitting this work I am indicating
-    that I have read the University's Academic Integrity Policy. I
-    declare that all material in this assessment is my own work except
-    where there is clear acknowledgement and reference to the work of
-    others.\par}
-
-  \vspace{5mm} {\footnotesize I give permission for this work
-    to be reproduced and submitted to other academic staff for
-    educational purposes.\par}
-
-  \vspace{5mm} {\footnotesize {\bf OPTIONAL:} I give permission this work
-    to be reproduced and provided to future students as an exemplar report.\par}
 
   \vfill
 \end{titlepage}
@@ -80,19 +83,19 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%555
 % abstract
-\begin{abstract}
-  This report is a simple template intended as a simple, consistent
-  starting point for students to prepare  \LaTeX\ reports in the
-  School of Mathematical Sciences at the University of Adelaide. 
+% \begin{abstract}
+%   This report is a simple template intended as a simple, consistent
+%   starting point for students to prepare  \LaTeX\ reports in the
+%   School of Mathematical Sciences at the University of Adelaide. 
 
-  It is neither complete, nor perfect, but rather is aimed at making
-  it easy for students to present a report which avoids many of the
-  worst errors. 
+%   It is neither complete, nor perfect, but rather is aimed at making
+%   it easy for students to present a report which avoids many of the
+%   worst errors. 
 
-  Included in each section are descriptions of how these might be
-  written. However, mileage may vary. You should follow the advice of
-  your lecturer in preference to any statement made here.
-\end{abstract}
+%   Included in each section are descriptions of how these might be
+%   written. However, mileage may vary. You should follow the advice of
+%   your lecturer in preference to any statement made here.
+% \end{abstract}
 
 
 %\vspace{10mm}
@@ -123,301 +126,401 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%555
 %% main report
 %\clearpage
+
+\section{Abstract (Summary)} 
+
+This report grew out of the final draft that I had written for my capstone course, directed by Professor
+\href{https://raymondvozzo.github.io/}{Raymond Vozzo} (my favorite educator during my undergraduate years). 
+However, I aim for it to be a better version and an extension of the original one by refining the structure of 
+my writing to be more cohesive and the story more compelling. \\  
+
 \section{Introduction}
-
-The intention of this file is to provide a simple, consistent \LaTeX\
-template for the School of Mathematical Sciences at the University of
-Adelaide. Its goals are
-\begin{enumerate}
-\item to ease production of clean, appealing reports in \LaTeX ;
-
-\item to allow us to provide consistent guidelines as to the desired
-  length of the reports; and
-
-\item to be a source of advice about writing your report.
-
-\end{enumerate}
-The intention is that students can replace text with their own, and so
-start their report. 
-
-The style and formatting here are minimal, so as to maintain a very
-simple template, but there is no desire that students who wish to go
-beyond this template should be restrained, as long as their final
-report is consistent with quality and length requirements. In
-particular, any alternative should respect the font size (12pt) and
-the page size, which is A4, with 4cm margins to allow feedback.
-
-This template also suggests a structure, but please replace section
-headings with meaningful headings of your own. 
-
-You may note that some pieces are omitted that you might have often
-seen added, for instance, there is no Table of Contents. Many such things are added because of defunct ``rules''
-rather than for utility. Here we have taken a minimalist style, unless a
-specific feature serves a clear purpose. 
-
-\noindent \hrulefill
-
-{\bf Notes:}
-An introduction must be strong, or your reader (with their limited
-time), will give up on the work.
-
-Important facets of an introduction are:
-  \begin{itemize}
-  \item introduce the basic ideas to be presented (at a high level);
-  \item strongly motivate the work; 
-  \item describe what you will do and present; and 
-  \item give a summary of key results.
-  \end{itemize}
  
-You may notice it sounds a little like the abstract, and it
-is. However, now you have space and time to go into more detail
-(though it is still somewhat abstracted from the full detail).
+\subsection{Geodesics}
+Many centuries ago, one of Western civilization's most influential thinkers, Aristotle, developed a theory of motion, which has laid the physical foundations for later thinkers \cite{physics}. In this collection of treatises, he describes different kinds of motions and one of them being "uniform motion." He stated that a uniform motion is a motion on a straight line or a great circle. However, this is not entirely accurate as later physicists and scientists refined the notion some more. And from all of that, modern theoretical physicist would tell us that uniform motions are motions along geodesics. Geodesics are a generalization of the concept of a ``straight line" from a flat plane to a curved surface. The study of these "shortest curves" was revitalized with foundational work by mathematicians like Bernoulli, Euler, and Gauss \cite{b_4}. Beyond the theory, let us imagine ourselves on an airplane going from Adelaide to Singapore. We would naturally assume that that our airplane would travel the shortest possible path between the two countries. And we would be right to think so. This "shortest possible path" is a path on a "great circle" (informally, a circle with the largest diameter on a sphere) and we will see later that any great circles on a sphere are geodesics. Therefore, every time we are on airplane, we travel along a geodesic by solving a system of ODEs (modulo wind). Other applications are in physics, especially theoretical physics, where particles in space travel along geodesics to preserve energy; in robotics where motions of robots are computed along geodesics, and many more \cite{wikipedia}. This report aims to setup and attack the geodesic problem on general surfaces.
+
+ % In physics, it describes the motion of particles in classical mechanics and the paths of light in general relativity. In engineering and computer science, computing geodesics is crucial for problems in robotics, such as motion planning , and for applications in computer graphics and vision, including shape analysis and surface modeling.
+
+\vspace{5mm}
+
+\noindent 
+% This report will explore the theory and computation of geodesics both manually and by computer programs. We begin by establishing the formal definition of a geodesic and its fundamental properties. We then introduce the geodesic equations, a system of differential equations whose solutions fully characterize the geodesics on a given surface. While these equations can be solved analytically for simple surfaces, most practical applications (in the aforementioned scientific and engineering fields) where surfaces are complicated, we must turn to more pragmatic computational or numerical methods. 
+
+
+% We will discuss how finding a geodesic can be framed as a two-point boundary value problem, which can be solved numerically. Finally, we will connect the theory back to the intuitive notion of geodesics as the shortest paths between points on a surface.
+
+% \prop[Evenness]{If $x$ is an even integer, then $x^2$ is also even.}
+
+\defn[Geodesics]{A curve $\gamma: (\alpha, \beta) \to \mathbb{R}^2$ on a surface $S \subseteq \mathbb{R}^3$ is called a $\textit{geodesics}$ if $\ddot{\gamma}$ is zero or perpendicular to the tangent plane of $S$ at the point $\gamma(t)$, i.e., parallel to its unit formal, \textbf{for all} values of the parameter $t$.}
+% \end{proposition}
+
+% \vspace{0.1cm}
+% \subsection{Equivalent definitions}
+% \begin{remark}
+% Some books also (TO-ADD-REFERENCES) define geodesics as curves on a surface whose tangent vector $\ddot{\gamma}$ is parallel along $\gamma.$ We could have also started with this, however we will avoid this since it requires us to define what it means for a vector to be \textbf{parallel} along a curve.
+% \end{remark}
+
+% \defn[Parallel vectors]{A vector }
+
+
+
+% \noindent
+
+
+% \begin{proof}
+% This proof follows directly from the definitions. We must prove both directions of the implication.
+
+% ($\Rightarrow$) First, assume $\gamma$ is a geodesic. By Definition 1.1, its acceleration vector $\ddot{\gamma}(t)$ is perpendicular to the tangent plane of the surface $S$ at every point $\gamma(t)$. The vector field we are considering is the tangent vector field, $\mathbf{v}(t) = \dot{\gamma}(t)$. Its derivative is $\dot{\mathbf{v}}(t) = \ddot{\gamma}(t)$. A tangent vector field is defined as being \textbf{parallel} along a curve if its derivative is perpendicular to the tangent plane. Since the derivative of our tangent vector field (which is $\ddot{\gamma}$) is perpendicular to the tangent plane, the tangent vector field $\dot{\gamma}$ is, by definition, parallel along $\gamma$.
+
+% ($\Leftarrow$) Now, assume the tangent vector field $\dot{\gamma}$ is parallel along $\gamma$. By the definition of a parallel vector field, the derivative of this vector field must be perpendicular to the tangent plane at every point. The derivative of the tangent vector field is the acceleration vector, $\ddot{\gamma}$. Therefore, $\ddot{\gamma}$ is perpendicular to the tangent plane. This is precisely the definition of a geodesic.
+% \end{proof}
+% \vspace{1cm}
+
+\noindent 
+\begin{remark}
+Whenever a definition is introduced, it helps to try to come up with different examples, of varying difficulty and abstractions, to illuminate it further and chip away at its $\textit{actual}$ meaning(s). Although we may not be able to always do this and may require more powerful results, the examples below are hand-picked to enforce the reader's understanding of the above definition from various angles before reading more complicated results. Below are examples that should be kept in our mathematical toolbox as we shall see later that they can be used to deduce further (remaining) geodesics of more complicated surfaces.
+\end{remark}
+\subsection{Examples}
+
+\begin{enumerate}
+    \item Any (part of a) straight line on a surface is a geodesics.
+        \begin{proof}
+        A straight line can be parameterized with constant speed by the equation
+        $$ \gamma(t) = \mathbf{a} + t\mathbf{b} $$
+        where $\mathbf{a}$ and $\mathbf{b}$ are constant vectors. The velocity vector is found by differentiating with respect to $t$:
+        $$ \dot{\gamma}(t) = \mathbf{b} $$
+        Differentiating a second time gives the acceleration vector:
+        $$ \ddot{\gamma}(t) = \mathbf{0} $$
+        According to Definition 1.1, a curve is a geodesic if its acceleration vector is zero or parallel to the surface normal. Since the acceleration is the zero vector, the condition is satisfied. Therefore, any straight line on a surface is a geodesic. This immediately implies that all straight lines in a plane, as well as the rulings on cylinders, cones, and hyperboloids of one sheet, are all geodesics.
+        \end{proof}
+    \item From Example 1, we can deduce that all straight lines in a plane, hyperboloid of one sheet and  are geodesics. 
+    % \item Any straight lines on a hyperboloid of one sheet are geodesics; in fact,  
+    % \item The rulings of any ruled surface, such as those of a generalized cylinder or a generalized cone are also geodesics. In fact, 
+    % \item Any (part of a) straight line on a surface is a geodesics.
+    \item Probably the next simplest (but not simple) example of a geodesic can be found in a geometry different from Euclid's, namely spherical geometry. The analog to "straightest curves/lines" on a sphere are \textit{great circles}. Before we 
+
+    \defn[Tangent Vector Field]{...}
+    \defn[Parallel tangent vector field]{...}
+    
+    We will see later that it is, quite rigorously, the shortest possible curve on a sphere. But before that, we 
+        \begin{proof}
+         A great circle is the intersection of a sphere with a plane that passes through the sphere's center. Let's consider a sphere of radius $R$ centered at the origin. We can parameterize any great circle on this sphere by choosing two orthogonal unit vectors, $\mathbf{a}$ and $\mathbf{b}$, that lie in the plane of the circle. A unit-speed parametrization is then given by:
+        $$ \gamma(s) = \cos(s/R)\mathbf{a} + R\sin(s/R)\mathbf{b} $$
+        where $s$ is the arc length parameter. Differentiating with respect to $s$ gives the velocity vector:
+        $$ \dot{\gamma}(s) = -\sin(s/R)\mathbf{a} + \cos(s/R)\mathbf{b} $$
+        Differentiating a second time gives the acceleration vector:
+        $$ \ddot{\gamma}(s) = -\frac{1}{R}\cos(s/R)\mathbf{a} - \frac{1}{R}\sin(s/R)\mathbf{b} = -\frac{1}{R^2}\gamma(s) $$
+        For a sphere centered at the origin, the unit normal vector $\mathbf{N}$ at a point $\mathbf{p}$ on its surface is parallel to the position vector of that point, i.e., $\mathbf{N}$ is parallel to $\mathbf{p} = \gamma(s)$.
+        Our calculated acceleration vector, $\ddot{\gamma}(s) = -\frac{1}{R^2}\gamma(s)$, is a scalar multiple of the position vector $\gamma(s)$. Therefore, the acceleration is parallel to the surface normal at every point along the curve. By Definition 1.1, the great circle is a geodesic.
+        \end{proof}
+
+        \begin{remark}
+            A perceptive reader may ask, "Since a straight line segment on any given surface is a geodesic, does that mean a straight line on a sphere is also a geodesic?". We would say that straight line segments do not even \textit{exist} on a sphere! A little thinking may induce an image of a straight line segment protruding out of a sphere! It cannot be on the sphere, however if we orthogonally project it onto the sphere, then it will be great circle assuming that it passes through the \textit{center} of the sphere in the first place.
+        \end{remark}
+\end{enumerate}
+
+% \begin{theorem}
+% Any great circle on a sphere is a geodesic.
+% \end{theorem}
 
 
 \clearpage
-\section{Background}
+% \section{Determining all geodesics on a surface using heavier machinery}
+\section{Existence and Uniqueness of Geodesics}
 
-The first section, in many cases, that you present should present
-related background material. In might include:
+As the name of this section suggests or implies, there is a "differential equations" flavor to it and the reader is right to think so. Beginning with the uniqueness, as with most uniqueness theorems in the theory of ODEs, we are well-equipped to grapple with \\ 
+
+While simple examples of geodesics can be identified via the definition, finding all the geodesics on an arbitrary surface $\textit{requires}$ a more powerful, analytical approach. This is achieved by solving a system of second-order differential equations known as the geodesic equations. These equations are derived from the fundamental definition of a geodesic and are expressed in terms of the coefficients of the surface's first fundamental form.
+
+\begin{theorem}[Geodesic Equations]
+A curve $\gamma(t) = \sigma(u(t),v(t))$ on a surface patch $\sigma$ is a geodesic if and only if its component functions $u(t)$ and $v(t)$ satisfy the following pair of differential equations:
+\begin{align*}
+    \frac{d}{dt}(E\dot{u} + F\dot{v}) &= \frac{1}{2}(E_u \dot{u}^2 + 2F_u \dot{u}\dot{v} + G_u \dot{v}^2) \\
+    \frac{d}{dt}(F\dot{u} + G\dot{v}) &= \frac{1}{2}(E_v \dot{u}^2 + 2F_v \dot{u}\dot{v} + G_v \dot{v}^2)
+\end{align*}
+where $E, F, G$ are the coefficients of the first fundamental form of $\sigma$, and subscripts denote partial derivatives (e.g., $E_u = \frac{\partial E}{\partial u}$).
+\end{theorem}
+
+
+\begin{proof}
+    This proof demonstrates the equivalence between the geometric definition of a geodesic and the analytical \emph{geodesic equations} (9.2).
+
+The core strategy is to take the geometric definition of a geodesic and show that it simplifies into the two differential equations presented in the theorem. The proof concludes by stating that a "similar" derivation starting from the second condition, $\ddot{\gamma} \cdot \sigma_v = 0$, yields the second geodesic equation. For full detail, refer to \cite{b_5}[Theorem 9.2.1, p. 220]
+
+
+% \begin{enumerate}
+%     \item \textbf{Geometric Definition:} A curve $\gamma(t) = \sigma(u(t), v(t))$ is a geodesic if its acceleration vector, $\ddot{\gamma}$, is always perpendicular (normal) to the tangent plane of the surface $S$.
+
+%     \item \textbf{Vectorial Condition:} The tangent plane at any point on the patch $\sigma$ is spanned by the basis vectors $\{\sigma_u, \sigma_v\}$. Therefore, the geometric condition in (1) is true if and only if $\ddot{\gamma}$ is perpendicular to both basis vectors. This gives the two equivalent equations:
+%     \begin{itemize}
+%         \item (a) $\ddot{\gamma} \cdot \sigma_u = 0$
+%         \item (b) $\ddot{\gamma} \cdot \sigma_v = 0$
+%     \end{itemize}
+
+%     \item \textbf{Deriving the First Equation:} The proof proceeds by analyzing equation (a).
+%     \begin{itemize}
+%         \item First, the velocity vector is $\dot{\gamma} = \dot{u}\sigma_u + \dot{v}\sigma_v$.
+%         \item A key identity is derived from the product rule for differentiation:
+%         $$
+%         \frac{d}{dt}(\dot{\gamma} \cdot \sigma_u) = \ddot{\gamma} \cdot \sigma_u + \dot{\gamma} \cdot \dot{\sigma_u}
+%         $$
+%         \item Rearranging this gives an expression for the geodesic condition:
+%         $$
+%         \ddot{\gamma} \cdot \sigma_u = \frac{d}{dt}(\dot{\gamma} \cdot \sigma_u) - \dot{\gamma} \cdot \dot{\sigma_u}
+%         $$
+%     \end{itemize}
+    
+%     \item \textbf{Analyzing the Terms:} The two terms on the right-hand side are evaluated separately:
+%     \begin{itemize}
+%         \item \textbf{Term 1:} $\frac{d}{dt}(\dot{\gamma} \cdot \sigma_u)$ \\
+%         Using the definitions of the first fundamental form ($E = \sigma_u \cdot \sigma_u$, $F = \sigma_u \cdot \sigma_v$), this term is shown to be:
+%         $$
+%         \dot{\gamma} \cdot \sigma_u = (\dot{u}\sigma_u + \dot{v}\sigma_v) \cdot \sigma_u = \dot{u}(\sigma_u \cdot \sigma_u) + \dot{v}(\sigma_v \cdot \sigma_u) = E\dot{u} + F\dot{v}
+%         $$
+%         Thus, the first term is $\frac{d}{dt}(E\dot{u} + F\dot{v})$, which is the left-hand side of the first geodesic equation.
+
+%         \item \textbf{Term 2:} $\dot{\gamma} \cdot \dot{\sigma_u}$ \\
+%         This term is expanded using the chain rule ($\dot{\sigma_u} = \sigma_{uu}\dot{u} + \sigma_{uv}\dot{v}$) and the partial derivatives of the first fundamental form (e.g., $E_u = 2\sigma_u \cdot \sigma_{uu}$, $G_u = 2\sigma_v \cdot \sigma_{vu}$, etc.). After substituting, this expression is shown to be:
+%         $$
+%         \dot{\gamma} \cdot \dot{\sigma_u} = \frac{1}{2}(E_u\dot{u}^2 + 2F_u\dot{u}\dot{v} + G_u\dot{v}^2)
+%         $$
+%         This is the right-hand side of the first geodesic equation.
+%     \end{itemize}
+
+%     \item \textbf{Conclusion:} By substituting the results from (4) back into the identity in (3), the geometric condition $\ddot{\gamma} \cdot \sigma_u = 0$ is shown to be equivalent to:
+%     $$
+%     \frac{d}{dt}(E\dot{u} + F\dot{v}) - \frac{1}{2}(E_u\dot{u}^2 + 2F_u\dot{u}\dot{v} + G_u\dot{v}^2) = 0
+%     $$
+%     This is precisely the first geodesic equation (9.2).
+% \end{enumerate}
+
+\end{proof}
+
+\noindent 
+These equations are generally non-linear and difficult to solve analytically. However, for surfaces with a high degree of symmetry, such as a circular cylinder, a complete solution can be found.
+
+\subsection{Examples (and sanity check):}
+
+\begin{enumerate}
+    \item Having developed the theorem above, we can verify it on examples we have already known to be geodesics. Beginning with: 
+        \begin{enumerate}
+            \item Straight lines. By using the coefficients of its First Fundamental Form, $E = G = 1$ and $F = 0$, hence we have from the two geodesic equations $\ddot{u} = \ddot{v} = 0$ and only straight lines satisfy this condition (why?).  
+            \item Great circles. Similarly,  
+        \end{enumerate}
+    \item Geodesics on a Circular Cylinder. Let's find the geodesics on a circular cylinder of radius $a$ using the standard parametrization $\sigma(u,v) = (a\cos u, a\sin u, v)$.
+
+First, we compute the coefficients of the first fundamental form. The tangent vectors are:
+\begin{align*}
+    \sigma_u &= (-a\sin u, a\cos u, 0) \\
+    \sigma_v &= (0, 0, 1)
+\end{align*}
+The coefficients are then:
+\begin{align*}
+    E &= \sigma_u \cdot \sigma_u = a^2\sin^2 u + a^2\cos^2 u = a^2 \\
+    F &= \sigma_u \cdot \sigma_v = 0 \\
+    G &= \sigma_v \cdot \sigma_v = 1
+\end{align*}
+Notice that $E, F,$ and $G$ are all constants. This means all of their partial derivatives ($E_u, E_v, F_u, \dots$) are zero. Substituting these into the geodesic equations gives a significant simplification:
+\begin{align*}
+    \frac{d}{dt}(a^2\dot{u} + 0\dot{v}) &= 0 \quad \implies \quad \frac{d}{dt}(a^2\dot{u}) = 0 \\
+    \frac{d}{dt}(0\dot{u} + 1\dot{v}) &= 0 \quad \implies \quad \frac{d}{dt}(\dot{v}) = 0
+\end{align*}
+Integrating these two equations with respect to $t$ yields:
+\begin{align*}
+    a^2\dot{u} &= c_1 \\
+    \dot{v} &= c_2
+\end{align*}
+where $c_1$ and $c_2$ are constants. From this, we can find the relationship between $v$ and $u$ along the geodesic curve using the chain rule:
+$$ \frac{dv}{du} = \frac{\dot{v}}{\dot{u}} = \frac{c_2}{c_1/a^2} = D_1 \quad (\text{a constant}) $$
+Integrating this simple differential equation gives the final result:
+$$ v = D_1 u + D_2 $$
+This equation describes all possible geodesics on the cylinder:
 \begin{itemize}
-\item literature review or related work section;
-\item common notation and definitions; and/or
-\item references for techniques to be used.
+    \item If $c_1=0$, then $\dot{u}=0$ and $u$ is constant. These are the vertical straight-line rulings on the cylinder.
+    \item If $c_2=0$, then $\dot{v}=0$ and $v$ is constant. These are the horizontal circular cross-sections.
+    \item If neither are zero, the path is a \textbf{circular helix}, which spirals around the cylinder at a constant angle to the vertical rulings.
 \end{itemize}
-
-The type and detail of the content needed here depends strongly on the
-audience. Some information may be omitted if it is common knowledge to
-the specific audience, but care must be taken over any such
-assumptions. Err on the conservative side.
-
-\vspace{10mm}
-\noindent \hrulefill
-
-{\bf Notes:}
-Writing a technical document is much like writing any other
-document. There is still a story you are trying to tell. However,
-there are certain features common to technical writing that you many
-not have encountered.
-
-In general, the goal of many technical reports is to convey more
-precise, quantitative information than, for instance, a
-novel. Technical writing should be approached by asking ``What does my
-reader need to know so that they could reproduce my results exactly
-(without asking me any supplemental questions)?'' 
-
-The first starting point towards this goal is to define (i) any terms
-or notation used precisely, (ii) provide a reader with definitive
-references for techniques used, and (iii) to put the work into the
-correct context within the larger scientific literature. 
-
-Your introduction, or this section will be the first place you need to
-include references.  BibTeX, and related tools are a superior means to
-do so. There is one small example in this
-template~\cite{guy17:_thing_i_wrote}.  Using references well is an
-art. The approach varies depending on the use:
-\begin{enumerate}
-
-\item to allow a more concise description of a problem or method where
-  it is already described in detail elsewhere;
-
-\item to support arguments;
-
-\item to give credit to other authors for their ideas or tools; and 
-
-\item to provide links to additional information for the reader, for
-  instance where to find a particular software package.
-
 \end{enumerate}
 
 
-\clearpage
-\section{Methods}
 
-The primary tool used in preparation of this report is \LaTeX , a
-markup tool for the preparation of documents primarily used in
-mathematics and related areas. 
+TODO: Add images of the 3 families of geodesics
 
-Markup tools have the advantage of separating content from style, thus
-allowing writers to focus on the content, and adding style (for
-example, the format of section headings) later. It is a flexible and
-powerful approach. 
 
-The other key advantage of \LaTeX\ is the high quality of its
-mathematical typesetting. There are no better tools for this task,
-though there are many variants of \LaTeX\, and tools through which to
-use it. 
+% TODO: May add an image of the geodesics for a circular cylinder
 
+\subsection{Examples: Geodesics on surfaces of revolution}
+Possibly, the simplest non-trivial example of geodesics are the ones on a torus \cite{visualizer}[Widget]. The surface of a torus with major radius $a$ and minor radius $b$ (where $a > b$) can be parameterized by $u, v \in [0, 2\pi]$. The parameter $u$ runs around the circumference of the tube, while $v$ runs around the main axis of the torus.
+
+\subsubsection*{1. Parameterization}
+The parameterization $\vec{r}(u, v) \to \mathbb{R}^3$ is given by:
+\begin{align}
+    x &= (a + b \sin u) \cos v \label{eq:param_x} \\
+    y &= (a + b \sin u) \sin v \label{eq:param_y} \\
+    z &= b \cos u \label{eq:param_z}
+\end{align}
+where $0 \le u \le 2\pi$ and $0 \le v \le 2\pi$.
+
+\subsubsection*{2. Squared Differential Length}
+The squared differential length $ds^2$ (which is used to measure distances on the surface) is given by:
+\begin{equation}
+    ds^2 = b^2 du^2 + (a + b \sin u)^2 dv^2
+    \label{eq:metric}
+\end{equation}
+
+\subsubsection*{3. Geodesic Equations}
+The geodesic equations, which describe the shortest paths on the surface, are given by the following system of differential equations:
+\begin{align}
+    \ddot{u} &= \frac{1}{b} (a + b \sin u) \cos u \dot{v}^2 \label{eq:geo_u} \\
+    \ddot{v} &= -\frac{2b \cos u}{a + b \sin u} \dot{u}\dot{v} \label{eq:geo_v}
+\end{align}
+As noted in the source, these equations do not have singularities as long as $a > b > 0$, since the term $(a + b \sin u)$ is always positive.
 
 
 \vspace{10mm}
-\noindent \hrulefill
-
-{\bf Notes:}
-This template suggests that your next section should describe methods
-used or developed in this report. Methods that are simple background
-material should go in the previous section. This section focuses on
-those that are novel, or in some cases just more difficult and more
-important for the work.
-
-Sometimes the section will be called ``methods,'' but a more
-specific and descriptive heading is usually preferable. 
-
-Your focus in describing these should be reproducibility. A reader
-should ideally be able to recreate your work from your description. 
-
-Describe data, experiments, simulations, or solution techniques such
-that your reader can understand exactly what you did.  It may be
-helpful to keep trying to answer the 6Ws: Why, When, Where, What, Who
-and How.
-
-However, the art of such writing is to balance detail and precision
-with brevity. Concise descriptions are to be preferred because the
-information is more accessible. Often we use references to allow us to
-abbreviate or omit some details that are common to other experiments
-or problems.
-
-Mathematical notation is also very useful in composing precise, yet
-concise descriptions of a problem.  However, do not use mathematics or
-jargon for its own sake. Clarity is important, and mathematics or
-complicated technical terms can either enhance this (when used
-appropriately) or detract from it (if used carelessly). Your goal is
-{\em not} to try to seem smart by using complicated words. Your goal is to
-communicate!
-
-A tutorial or examples of \LaTeX\ use are not included
-here as there are now many sources of such information. For instance
-see  \url{http://www.maths.adelaide.edu.au/anthony.roberts/LaTeX/index.html.}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{circular_cylinder.png}
+    \caption{A straight line in the plane (left) is mapped by a local isometry to a geodesic helix on the cylinder (right). This illustrates the different types of geodesics. Reference to be added.} 
+    \label{fig:cylinder}
+\end{figure}
 
 
 \clearpage
-\section{Results}
-This template has no results to report. 
+\section{Geodesics as the Shortest Paths}
 
-\vspace{10mm}
-\noindent \hrulefill
+Our journey began with the intuition that a geodesic is the straightest possible path on a curved surface. This idea is formally linked to the familiar concept of "shortest distance" by a fundamental theorem in differential geometry. We know from elementary (grade-school) geometry that on a plane, \textit{the shortest path between 2 fixed points is the straight line segment}. However, has one encountered a rigorous proof? 
 
-{\bf Notes:} Remember the advice from the previous section. You need
-your results to be concise, but once again be concrete, quantitative,
-and provide enough information that the results could be reproduced
-and verified. 
+\begin{proof}
+    Let $\gamma: I \subset_{open} \mathbb{R} \to \mathbb{R}^n (n \in \mathbb{N})$ be a curve with two fixed points $p, q \in$ $\gamma(I)$. Then $p = \gamma(a)$ and $q = \gamma(b)$ for some $a < b \in I.$ Let $u \in \mathbb{R}^n$ be a unit vector. We will prove it in 3 stages. 
+    
+\noindent
+     By the Fundamental Theorem of Calculus, the properties of integrals, and the Cauchy-Schwarz inequality, we have:
+\begin{align*}
+    (\mathbf{q} - \mathbf{p}) \cdot \mathbf{u} &= (\gamma(b) - \gamma(a)) \cdot \mathbf{u} \\
+    &= \left( \int_a^b \dot{\gamma}(t) dt \right) \cdot \mathbf{u} \\
+    &= \int_a^b (\dot{\gamma}(t) \cdot \mathbf{u}) dt \\
+    &\leq \int_a^b |\dot{\gamma}(t) \cdot \mathbf{u}| dt \tag{Since $x \leq |x|$} \\
+    &\leq \int_a^b \Vert\dot{\gamma}(t)\Vert \Vert\mathbf{u}\Vert dt \tag{Cauchy-Schwarz} \\
+    &= \int_a^b \Vert\dot{\gamma}(t)\Vert dt \tag{Since $\Vert\mathbf{u}\Vert = 1$} \\
+    &= L(\gamma)
+\end{align*}
+We have now shown that $(\mathbf{q} - \mathbf{p}) \cdot \mathbf{u} \leq L(\gamma)$ for any unit vector $\mathbf{u}$.
 
-Figures and tables can be very useful. However, while a picture is
-worth a thousand words, this is not true by itself. Any graph of
-figure included in a report MUST have:
+Now, we choose the specific unit vector $\mathbf{u} = \frac{\mathbf{q} - \mathbf{p}}{\Vert\mathbf{q} - \mathbf{p}\Vert}$. (If $\mathbf{p} = \mathbf{q}$, the inequality $0 \leq L(\gamma)$ is trivial).
+
+Substituting this $\mathbf{u}$ into our inequality:
+$$ (\mathbf{q} - \mathbf{p}) \cdot \left( \frac{\mathbf{q} - \mathbf{p}}{\Vert\mathbf{q} - \mathbf{p}\Vert} \right) \leq L(\gamma) $$
+$$ \frac{(\mathbf{q} - \mathbf{p}) \cdot (\mathbf{q} - \mathbf{p})}{\Vert\mathbf{q} - \mathbf{p}\Vert} \leq L(\gamma) $$
+$$ \frac{\Vert\mathbf{q} - \mathbf{p}\Vert^2}{\Vert\mathbf{q} - \mathbf{p}\Vert} \leq L(\gamma) $$
+This simplifies to the final result:
+$$ \Vert\mathbf{q} - \mathbf{p}\Vert \leq L(\gamma) $$
+
+\end{proof}
+
+
+\noindent 
+Although less trivially, great circles on a sphere are the shortest curve connecting non-antipodal points!
+\begin{proof}
+    Refer to \cite[p.155, Proposition 6.5.1]{b_5}.
+\end{proof}
+
+
+
+
+% This theorem is powerful because it confirms our intuition and provides the primary motivation for studying geodesics. It establishes that the set of all geodesics on a surface contains all the shortest-path connections. To find the shortest path, one must first find the geodesics.
+
+\subsection{The Converse: Are All Geodesics Shortest Paths?}
+
+An important subtlety is that the converse of the theorem is not always true: a curve can be a geodesic without being the shortest path between two points.An example is found on a sphere. Given two points $P$ and $Q$ on a sphere (that are not diametrically opposite), they lie on a unique great circle. This great circle is a geodesic, but it is divided by the points into two arcs: a short arc and a long arc. Both arcs satisfy the definition of a geodesic, as their acceleration vectors always point toward the center of the sphere. However, only the \textbf{short arc} is the true shortest path between $P$ and $Q$. The long arc is a geodesic that is a local, but not global, minimum of length.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{sphere_arcs.png}
+    \caption{Both the short arc and the long arc between points $P$ and $Q$ on a sphere are geodesics, but only the short arc is the shortest path. (\cite[Great circles]{wikipedia})}
+    \label{fig:sphere_arcs}
+\end{figure}
+
+\subsection{Existence of Shortest Paths}
+Furthermore, a shortest path between two points on a surface may not always exist. Consider the surface $S$ formed by the $xy$-plane with the origin removed. To travel from $P=(-1,0)$ to $Q=(1,0)$, the intuitive shortest path is the straight line segment connecting them. However, this path is not on the surface because it passes through the origin. Any curve on the surface $S$ that connects $P$ and $Q$ must go around the origin. For any such path, it's always possible to find a slightly shorter one by moving closer to the origin. Therefore, there is no single "shortest" path, only a greatest lower bound (an infimum) on the set of possible path lengths between $P$ and $Q$. \cite[p. 239 - 241]{b_5}
+
+% \cite{b_6}
+
+
+
+
+\section{Computational Methods for Geodesics}
+The analytical approach of solving the geodesic equations works well for highly symmetric surfaces like the plane, sphere, or cylinder. However, for the free-form parametric surfaces commonly found in engineering design (CAD/CAM), robotics, and computer graphics, these equations become far too complex to solve by analytical methods. To find geodesics on these surfaces, we must resort to computational methods.
+
+\subsection{The Boundary Value Problem}
+When seeking the shortest path between two fixed points, say $P_A$ and $P_B$, on a surface, the problem is no longer about just following an initial direction. Instead, we have a known start and a known end. The task is to find the path between them that satisfies the geodesic ordinary differential equations (ODEs). This is a classic numerical analysis problem known as a \textbf{two-point boundary value problem (BVP)}.
+
+While several techniques exist for solving BVPs, a common and robust approach for geodesics is the \textbf{relaxation method}, which is based on a finite difference discretization.
+
+\subsection{The Relaxation Method}
+The core idea of the relaxation method is to transform the continuous differential equation into a system of algebraic equations that can be solved by a compute. The process involves three main steps \cite{b_4}:
 \begin{enumerate}
-\item a detailed caption describing exactly what the figure shows
-  (it should almost stand alone);
-\item appropriate axes with labels including
-  units; and 
-\item discussion in the text of the document, not just the caption
-  (make sure you refer to exact figure numbers in the text).
+    \item \textbf{Discretize the path:} The unknown geodesic curve is approximated by a finite sequence of $m$ points, $Y_1, Y_2, \dots, Y_m$, where $Y_1=P_A$ and $Y_m=P_B$. The initial guess for this path can be as simple as a straight line between the points in the surface's parameter domain.
+
+    \item \textbf{Approximate the derivatives:} The derivatives in the geodesic equations (e.g., $\frac{du}{ds}, \frac{d^2u}{ds^2}$) are replaced by \textbf{finite difference} approximations. For instance, a first derivative $\frac{dy}{ds}$ at point $k$ can be approximated by $\frac{Y_{k+1}-Y_{k-1}}{s_{k+1}-s_{k-1}}$. This converts the system of ODEs into a large, non-linear system of algebraic equations involving the unknown coordinates of the points $Y_k$.
+
+    \item \textbf{Iterate to a solution:} This system of algebraic equations is then solved iteratively. Starting with the initial guess, a numerical solver like Newton's method is used to adjust the positions of the intermediate points $Y_2, \dots, Y_{m-1}$. Each iteration brings the path closer to satisfying the finite difference equations, effectively "relaxing" the initial guess into the final, true geodesic path.
 \end{enumerate}
-Moreover, they should be easy to read with large enough text, and
-clearly marked data points.  Tables should be treated similarly.  A
-few such in a document are very useful, but be aware that deluging a
-reading with figures and tables can be counter-productive. Part of the
-art of technical writing is choosing good ways of informing the reader
-of the critical information without diluting it with volumes of
-irrelevancies.
+
+% \begin{figure}[h!]
+%     \centering
+%     \includegraphics[width=0.6\textwidth]{curve_discretization.png}
+%     \caption{Illustration of a curve being discretized into a sequence of points, the first step in a finite difference method for solving a BVP.}
+%     \label{fig:discretization}
+% \end{figure}
+
+This method is powerful and reliable, but it's not the only way to compute geodesics. Other approaches include the "heat method", which relates geodesic distance to the physics of heat diffusion on a surface, and various algorithms from computational geometry designed for specific domains like simple polygons. These advanced methods are essential for modern applications in shape analysis and robotics.
+
+\vfill
 
 
 
 
-\clearpage
-\section{Conclusion}
 
-This brief template is intended to provide a simple starting point for
-students preparing \LaTeX\ reports.
- 
-It includes some advice about that report, but the brevity of this
-report means that this advice is simplified and generic. You should
-consult your lecturer for more detailed and specific advice.
 
-\vspace{10mm}
-\noindent \hrulefill
 
-{\bf Notes:} All works should have a conclusion. Briefly summarise
-your report (once again). Discuss the most important features of what
-you have achieved, and the implications of your results.  The
-conclusion should not introduce new information or ideas, however, if
-you feel it is appropriate, you may speculate on directions for future
-work.
 
-\clearpage
-\section*{Acknowledgements}
 
-This template has grown out of earlier versions and so has had contributions from many
-in the School of Mathematical Sciences including Liz Cousins, Yvonne Stokes, Ben Binder, Jono Tuke and Danny Stevenson.
 
-\vspace{10mm}
-\noindent \hrulefill
 
-{\bf Notes:} It is common that you will want to acknowledge the
-contribution of others to your work, even though these might not have
-been sufficient to warrant being a co-author.
-
-Consider who might have provided valuable discussions, funding
-support, or moral support for the work. 
-
-BTW, you don't have to start each section on a new page. It is done
-here for clarity, but it isn't usually needed.
-
-Also you should not have these notes section in your report.
-
-\appendix
-
-\section{Appendices}
-
-This is a short appendix, just included as an example. 
-
-\vspace{10mm}
-\noindent \hrulefill
-
-{\bf Notes:} 
-An appendix can be used to include material that is important, but not
-needed in the main body of the text, and which it might detract from
-the main point of the report. 
-
-A common example is code.  You should not include code in the main
-body of a report unless it is particularly important or revealing.
-
-However, for the convenience of your supervisors who may wish to
-examine the code, and for your own benefit (in having a self-contained
-document), you may wish to include the code in an appendix. If so,
-have a look at the {\tt listings} package for \LaTeX. For Matlab,
-there is also a {\tt matlab-prettifier} package that may work more
-easily for you. 
 
 \clearpage
 \bibliographystyle{plain}
-\begin{thebibliography}{9}
-\bibitem{guy17:_thing_i_wrote}
-Some Guy. A thing I wrote. \emph{The Journal of Stuff} {\bf 1}, 101--110, 2017.
+\begin{thebibliography}{9} 
+\bibitem{physics}
+Aristotle. \textit{Physics}. Translated by R. P. Hardie and R. K. Gaye.
+The Internet Classics Archive, MIT.
+\href{https://classics.mit.edu/Aristotle/physics.html}
+(Accessed: 3 November 2025).
+\bibitem{wikipedia}
+Wikipedia contributors. "Geodesic." \textit{Wikipedia, The Free Encyclopedia}.
+\href{https://en.wikipedia.org/wiki/Geodesic}
+(Accessed: 3 November 2025). % <-- IMPORTANT: Change this to your real access date
+\bibitem{b_2}
+Hagen, Hans, and Hotz, Ingrid. "Variational Modeling Methods for Visualization."
+In: \textit{Visualization Handbook}, edited by Charles D. Hansen and Chris R. Johnson,
+Springer, 2004, pp. 381--392.
+\bibitem{visualizer} Masson, Paul. \textit{Visualizing Geodesics on Surfaces}.
+Analytic Physics. \href{https://analyticphysics.com/General%20Relativity/Visualizing%20Geodesics%20on%20Surfaces.htm}{Link to webpage} (Accessed: 3 November 2025).
+\bibitem{b_3}
+Cleve, Jonas, and Mulzer, Wolfgang. "An Experimental Study of Algorithms for Geodesic Shortest Paths in the Constant-Workspace Model."
+Technical Report, Institut f\"{u}r Informatik, Freie Universit\"{a}t Berlin.
+% The year of publication is missing from the screenshot.
+\bibitem{b_4} Computation of Shortest Paths on Free-Form Parametric Surfaces
+\bibitem{b_5} Pressley, Andrew. \textit{Elementary Differential Geometry}.
+Springer-Verlag London, 2001.
+\bibitem{b_7} Tawfeek, Andrew. "An Introduction to Geodesics: The Shortest Distance Between Two Points." arXiv preprint, arXiv:2007.02864v2 [math.FA], 2020.
+\url{https://arxiv.org/abs/2007.02864v2}
 \end{thebibliography}
-%\bibliography{your_bib_files_name}
+% \bibliography{your_bib_files_name}
 
 \vspace{10mm}
 \noindent \hrulefill
-
-{\bf Notes:} 
-A critical component of the work is the list of references. We have
-discussed their use earlier -- here some notes on their
-presentation are simply given along with a pointer as to where more information can be found.
-
-This is one of the hardest parts to get right. BibTeX can help a
-great deal, although is not used here as it is more effort that it is worth for a single small report. Whether you use this or not, you need to take a good deal of care to make sure
-that
-\begin{itemize}
-\item the references are in a consistent format;
-
-\item all information is correct; and 
-
-\item the information included is in the correct style for the
-  intended audience.
-
-\end{itemize}
-There are a number of different referencing styles which differ in the way and order in which information is given. For information on different referencing styles see \url{https://www.adelaide.edu.au/library/referencing-support}. You are welcome to use whatever referencing style you prefer; just use it consistently. 
-Details \emph{really} matter in this section and it's easy to lose marks.
 
 
 \end{document}
