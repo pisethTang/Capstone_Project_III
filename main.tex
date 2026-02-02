@@ -49,7 +49,7 @@
 
 
 % PUT YOUR TITLE AND NAME HERE
-\newcommand{\titlestr}{Defining the Straightest Path: Theory and Computation of Geodesics in Differential Geometry \\ DRAFT}
+\newcommand{\titlestr}{Theory and Computation of Geodesics in Differential Geometry \\ (DRAFT)}
 \newcommand{\shorttitlestr}{Geodesics}
 \newcommand{\authorstr}{Piseth Tang} % INSERT YOUR NAME(S)
 
@@ -130,14 +130,26 @@
 \section{Abstract (Summary)} 
 
 This report grew out of the final draft that I had written for my capstone course, directed by Professor
-\href{https://raymondvozzo.github.io/}{Raymond Vozzo} (my favorite educator during my undergraduate years). 
+\href{https://raymondvozzo.github.io/}{Raymond Vozzo} (my favorite professor during my undergraduate years ... (: ). 
 However, I aim for it to be a better version and an extension of the original one by refining the structure of 
 my writing to be more cohesive and the story more compelling. \\  
 
 \section{Introduction}
  
 \subsection{Geodesics}
-Many centuries ago, one of Western civilization's most influential thinkers, Aristotle, developed a theory of motion, which has laid the physical foundations for later thinkers \cite{physics}. In this collection of treatises, he describes different kinds of motions and one of them being "uniform motion." He stated that a uniform motion is a motion on a straight line or a great circle. However, this is not entirely accurate as later physicists and scientists refined the notion some more. And from all of that, modern theoretical physicist would tell us that uniform motions are motions along geodesics. Geodesics are a generalization of the concept of a ``straight line" from a flat plane to a curved surface. The study of these "shortest curves" was revitalized with foundational work by mathematicians like Bernoulli, Euler, and Gauss \cite{b_4}. Beyond the theory, let us imagine ourselves on an airplane going from Adelaide to Singapore. We would naturally assume that that our airplane would travel the shortest possible path between the two countries. And we would be right to think so. This "shortest possible path" is a path on a "great circle" (informally, a circle with the largest diameter on a sphere) and we will see later that any great circles on a sphere are geodesics. Therefore, every time we are on airplane, we travel along a geodesic by solving a system of ODEs (modulo wind). Other applications are in physics, especially theoretical physics, where particles in space travel along geodesics to preserve energy; in robotics where motions of robots are computed along geodesics, and many more \cite{wikipedia}. This report aims to setup and attack the geodesic problem on general surfaces.
+Many centuries ago, one of Western civilization's most influential thinkers, Aristotle, developed a theory of motion, which has laid the physical foundations for later thinkers \cite{physics}. In this collection of treatises, he describes different kinds of motions and one of them being "uniform motion." 
+He stated that a uniform motion is a motion on a straight line or a great circle. 
+However, this is not entirely accurate as later physicists and scientists refined the notion some more. 
+And from all of that, modern theoretical physicist would tell us that uniform motions are motions along geodesics. 
+Geodesics are a generalization of the concept of a ``straight line" from a flat plane to a curved surface. 
+The study of these "shortest curves" was revitalized with foundational work by mathematicians like Bernoulli, Euler, and Gauss \cite{b_4}. Beyond the theory, let us imagine ourselves on an airplane going from Adelaide to Singapore. 
+We would naturally assume that that our airplane would travel the shortest possible path between the two countries. And we would be right to think so. 
+This "shortest possible path" is a path on a "great circle" (informally, a circle with the largest diameter on a sphere) 
+and we will see later that any great circles on a sphere are geodesics. 
+Therefore, every time we are on airplane, we travel along a geodesic by solving a system of ODEs (modulo wind).
+Other applications are in physics, especially theoretical physics, where particles in space travel along geodesics to preserve energy;
+in robotics where motions of robots are computed along geodesics, and many more \cite{wikipedia}. 
+This report aims to setup and attack the geodesic problem on general surfaces, a tall order.
 
  % In physics, it describes the motion of particles in classical mechanics and the paths of light in general relativity. In engineering and computer science, computing geodesics is crucial for problems in robotics, such as motion planning , and for applications in computer graphics and vision, including shape analysis and surface modeling.
 
@@ -228,8 +240,10 @@ Whenever a definition is introduced, it helps to try to come up with different e
 % \section{Determining all geodesics on a surface using heavier machinery}
 \section{Existence and Uniqueness of Geodesics}
 
-As the name of this section suggests or implies, there is a "differential equations" flavor to it and the reader is right to think so. Beginning with the uniqueness, as with most uniqueness theorems in the theory of ODEs, we are well-equipped to grapple with \\ 
+As the name of this section suggests or implies, there is a ``differential equation''
+flavor to it and the reader is right to think so. Beginning with the uniqueness, as with most uniqueness theorems in the theory of ODEs, we are well-equipped to grapple with \\ 
 
+\noindent
 While simple examples of geodesics can be identified via the definition, finding all the geodesics on an arbitrary surface $\textit{requires}$ a more powerful, analytical approach. This is achieved by solving a system of second-order differential equations known as the geodesic equations. These equations are derived from the fundamental definition of a geodesic and are expressed in terms of the coefficients of the surface's first fundamental form.
 
 \begin{theorem}[Geodesic Equations]
@@ -243,9 +257,9 @@ where $E, F, G$ are the coefficients of the first fundamental form of $\sigma$, 
 
 
 \begin{proof}
+    I will not provide the proof here as it involves some technical results from the theory of ODEs but I will sketch it. 
     This proof demonstrates the equivalence between the geometric definition of a geodesic and the analytical \emph{geodesic equations} (9.2).
-
-The core strategy is to take the geometric definition of a geodesic and show that it simplifies into the two differential equations presented in the theorem. The proof concludes by stating that a "similar" derivation starting from the second condition, $\ddot{\gamma} \cdot \sigma_v = 0$, yields the second geodesic equation. For full detail, refer to \cite{b_5}[Theorem 9.2.1, p. 220]
+    The core strategy is to take the geometric definition of a geodesic and show that it simplifies into the two differential equations presented in the theorem. The proof concludes by stating that a ``similar'' derivation starting from the second condition, $\ddot{\gamma} \cdot \sigma_v = 0$, yields the second geodesic equation. For full detail, refer to \cite{b_5}[Theorem 9.2.1, p. 220]
 
 
 % \begin{enumerate}
@@ -297,7 +311,7 @@ The core strategy is to take the geometric definition of a geodesic and show tha
 \end{proof}
 
 \noindent 
-These equations are generally non-linear and difficult to solve analytically. However, for surfaces with a high degree of symmetry, such as a circular cylinder, a complete solution can be found.
+These equations are generally non-linear and difficult to solve analytically. However, for surfaces with a high degree of \textit{symmetry}, such as a circular cylinder, a complete solution can be found.
 
 \subsection{Examples (and sanity check):}
 
@@ -380,7 +394,7 @@ As noted in the source, these equations do not have singularities as long as $a 
 \vspace{10mm}
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=0.7\textwidth]{circular_cylinder.png}
+    \includegraphics[width=0.7\textwidth]{./assets/circular_cylinder.png}
     \caption{A straight line in the plane (left) is mapped by a local isometry to a geodesic helix on the cylinder (right). This illustrates the different types of geodesics. Reference to be added.} 
     \label{fig:cylinder}
 \end{figure}
@@ -436,7 +450,7 @@ An important subtlety is that the converse of the theorem is not always true: a 
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=0.5\textwidth]{sphere_arcs.png}
+    \includegraphics[width=0.5\textwidth]{./assets/sphere_arcs.png}
     \caption{Both the short arc and the long arc between points $P$ and $Q$ on a sphere are geodesics, but only the short arc is the shortest path. (\cite[Great circles]{wikipedia})}
     \label{fig:sphere_arcs}
 \end{figure}

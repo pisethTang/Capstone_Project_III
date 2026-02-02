@@ -1,8 +1,8 @@
 # Fdb version 3
-["pdflatex"] 1769999510 "/home/sething2002/Capstone_Project/Capstone_Project_III/report_template_v4.tex" "report_template_v4.pdf" "report_template_v4" 1769999511
+["pdflatex"] 1770001767 "/home/sething2002/Capstone_Project/Capstone_Project_III/main.tex" "build/main.pdf" "main" 1770001768
   "/etc/texmf/web2c/texmf.cnf" 1734750887 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/sething2002/.texlive2021/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.600pk" 1769998320 14040 b45aad7914392fd13610e29bcbbab997 ""
-  "/home/sething2002/Capstone_Project/Capstone_Project_III/report_template_v4.tex" 1769999510 33102 74be4feaee43d7f3cfa8f6aed000ec21 ""
+  "/home/sething2002/Capstone_Project/Capstone_Project_III/main.tex" 1770001698 33272 fa6684a0d926c685077ab7b199eb6eaf ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm1200.tfm" 1136768653 1536 74b7293ec3713bb7fdca8dd1bd1f469c ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
@@ -110,13 +110,13 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1769998215 4036811 4cb80868003c86b962b6b5ae1e1e2902 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1769998222 1405648 a3583b4829af34acbea4a2f794279725 ""
-  "circular_cylinder.png" 1769998668 249095 bcbfe9703d4ca543ec2ac4b93636416f ""
-  "report_template_v4.aux" 1769999511 4338 9941f1d0f85b6086c2298043f07000e1 "pdflatex"
-  "report_template_v4.out" 1769999511 2509 69da8bb8fbaea979acaeba3afe444796 "pdflatex"
-  "report_template_v4.tex" 1769999510 33102 74be4feaee43d7f3cfa8f6aed000ec21 ""
-  "sphere_arcs.png" 1769998668 15204 ba3fd4a0b6b75fbac60848580fa84f10 ""
+  "assets/circular_cylinder.png" 1769998668 249095 bcbfe9703d4ca543ec2ac4b93636416f ""
+  "assets/sphere_arcs.png" 1769998668 15204 ba3fd4a0b6b75fbac60848580fa84f10 ""
+  "build/main.aux" 1770001768 4338 9941f1d0f85b6086c2298043f07000e1 "pdflatex"
+  "build/main.out" 1770001768 2509 69da8bb8fbaea979acaeba3afe444796 "pdflatex"
+  "main.tex" 1770001698 33272 fa6684a0d926c685077ab7b199eb6eaf ""
   (generated)
-  "report_template_v4.aux"
-  "report_template_v4.log"
-  "report_template_v4.out"
-  "report_template_v4.pdf"
+  "build/main.aux"
+  "build/main.log"
+  "build/main.out"
+  "build/main.pdf"
