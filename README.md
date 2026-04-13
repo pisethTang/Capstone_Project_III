@@ -20,7 +20,7 @@ This project computes and visualizes shortest‑path approximations on 3D meshes
 1. You click **Run Analytics** in the UI.
 2. The React app sends a POST request to the Go server at /analytics.
 3. The Go server runs the C++ engine with mode analytics.
-4. The C++ engine calls the analytic solver in [analytics.hpp](analytics.hpp) and writes analytics.json.
+4. The C++ engine calls the analytics service in [src/analytics/analytic_service.cpp](src/analytics/analytic_service.cpp), which uses helper solvers in [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp), and writes analytics.json.
 5. The React app fetches analytics.json and renders the path in yellow.
 
 ### Diagram
@@ -63,7 +63,7 @@ Implementation: [main.cpp](main.cpp)
 
 ### 2) Analytic Geodesics (Parametric Surfaces)
 
-The analytic solver in [analytics.hpp](analytics.hpp) uses closed‑form or ODE solutions for special surfaces:
+The analytic solver in [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp) uses closed‑form or ODE solutions for special surfaces:
 
 #### Plane
 
@@ -85,7 +85,7 @@ $$
 
 where the Christoffel symbols $\Gamma^k_{ij}$ are derived from the surface metric.
 
-Implementation: [analytics.hpp](analytics.hpp)
+Implementation: [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp)
 
 ## Current Limitations
 
@@ -109,7 +109,10 @@ This method is fast, robust, and works on **any** triangle mesh, which is why it
 ## Project Files (Key Pieces)
 
 - C++ engine: [main.cpp](main.cpp)
-- Analytic solver: [analytics.hpp](analytics.hpp)
+- Analytic service: [src/analytics/analytic_service.cpp](src/analytics/analytic_service.cpp)
+- Analytic curve helpers: [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp)
+- Analytic normalization helpers: [src/analytics/analytic_normalization.cpp](src/analytics/analytic_normalization.cpp)
+- Analytic string helpers: [src/analytics/analytic_string_utils.cpp](src/analytics/analytic_string_utils.cpp)
 - Go API server: [backend/main.go](backend/main.go)
 - React + Three.js UI: [frontend/src/App.tsx](frontend/src/App.tsx)
 - Renderer: [frontend/components/GeodesicMesh.tsx](frontend/components/GeodesicMesh.tsx)

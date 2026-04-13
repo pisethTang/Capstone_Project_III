@@ -1,7 +1,6 @@
 #include "../../include/geodesic_lab/analytics/analytic_service.hpp"
+#include "../../include/geodesic_lab/analytics/analytic_curves.hpp"
 #include "../../include/geodesic_lab/algorithms/heat_method.hpp"
-
-#include "../../analytics.hpp"
 
 AnalyticsResult computeAnalyticsForModel(const std::string &inputFileName,
                                          int startId, int endId,

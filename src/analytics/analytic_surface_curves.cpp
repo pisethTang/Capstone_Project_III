@@ -1,33 +1,18 @@
-#pragma once
+#include "../../include/geodesic_lab/analytics/analytic_surface_curves.hpp"
 
 #include <algorithm>
 #include <cmath>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <limits>
-#include <queue>
-#include <string>
-#include <unordered_map>
+#include <utility>
 #include <vector>
 
-#include "include/geodesic_lab/analytics/analytic_params.hpp"
-#include "include/geodesic_lab/analytics/analytic_types.hpp"
-#include "include/geodesic_lab/io/json_escape.hpp"
-#include "include/geodesic_lab/types/christoffel2.hpp"
-#include "include/geodesic_lab/types/face.hpp"
-#include "include/geodesic_lab/types/metric2.hpp"
-#include "include/geodesic_lab/types/vec3_ops.hpp"
+#include "../../include/geodesic_lab/types/christoffel2.hpp"
+#include "../../include/geodesic_lab/types/geodesic_state.hpp"
+#include "../../include/geodesic_lab/types/metric2.hpp"
+#include "../../include/geodesic_lab/types/vec3_ops.hpp"
 
-// analytics.hpp
-// Single-file "analytics" module (header-style) included by main.cpp.
-// Produces analytic (continuous) geodesic polylines for a small set of
-// simple parametric surfaces.
+namespace {
 
-// NOTE: Public analytics types/params come from dedicated shared headers.
-
-static inline Metric2 computeMetric(const ParamSurface &surf, double u,
-                                    double v) {
+Metric2 computeMetric(const ParamSurface &surf, double u, double v) {
 	const double h = 1e-4;
 	const Vec3 r = surf.eval(u, v);
 	const Vec3 ru = vsub(surf.eval(u + h, v), r);
@@ -47,8 +32,7 @@ static inline Metric2 computeMetric(const ParamSurface &surf, double u,
 	return m;
 }
 
-static inline Christoffel2 computeChristoffel(const ParamSurface &surf,
-                                              double u, double v) {
+Christoffel2 computeChristoffel(const ParamSurface &surf, double u, double v) {
 	const double h = 1e-4;
 	const Metric2 m = computeMetric(surf, u, v);
 	const Metric2 mu = computeMetric(surf, u + h, v);
@@ -61,7 +45,6 @@ static inline Christoffel2 computeChristoffel(const ParamSurface &surf,
 	const double dF_dv = (mv.g01 - m.g01) / h;
 	const double dG_dv = (mv.g11 - m.g11) / h;
 
-	// g_ij derivatives: g00=E, g01=F, g11=G
 	const double g00_u = dE_du;
 	const double g01_u = dF_du;
 	const double g11_u = dG_du;
@@ -70,10 +53,6 @@ static inline Christoffel2 computeChristoffel(const ParamSurface &surf,
 	const double g11_v = dG_dv;
 
 	Christoffel2 c;
-	// Using Gamma^k_{ij} = 0.5 * g^{kl} (∂_i g_{jl} + ∂_j g_{il} - ∂_l g_{ij})
-	// k = u (0), v (1)
-	// i,j in {u,v}
-	// For k=u:
 	const double inv00 = m.inv00;
 	const double inv01 = m.inv01;
 	const double inv11 = m.inv11;
@@ -95,15 +74,7 @@ static inline Christoffel2 computeChristoffel(const ParamSurface &surf,
 	return c;
 }
 
-struct GeodesicState {
-	double u;
-	double v;
-	double du;
-	double dv;
-};
-
-static inline GeodesicState geodesicRhs(const ParamSurface &surf,
-                                        const GeodesicState &s) {
+GeodesicState geodesicRhs(const ParamSurface &surf, const GeodesicState &s) {
 	const Christoffel2 c = computeChristoffel(surf, s.u, s.v);
 	GeodesicState ds;
 	ds.u = s.du;
@@ -115,8 +86,8 @@ static inline GeodesicState geodesicRhs(const ParamSurface &surf,
 	return ds;
 }
 
-static inline GeodesicState rk4Step(const ParamSurface &surf,
-                                    const GeodesicState &s, double h) {
+GeodesicState rk4Step(const ParamSurface &surf, const GeodesicState &s,
+	                  double h) {
 	const GeodesicState k1 = geodesicRhs(surf, s);
 	const GeodesicState s2{s.u + 0.5 * h * k1.u, s.v + 0.5 * h * k1.v,
 	                       s.du + 0.5 * h * k1.du, s.dv + 0.5 * h * k1.dv};
@@ -136,9 +107,9 @@ static inline GeodesicState rk4Step(const ParamSurface &surf,
 	return out;
 }
 
-static inline std::vector<GeodesicState>
-integrateGeodesic(const ParamSurface &surf, const GeodesicState &start,
-                  int steps) {
+std::vector<GeodesicState> integrateGeodesic(const ParamSurface &surf,
+	                                         const GeodesicState &start,
+	                                         int steps) {
 	std::vector<GeodesicState> out;
 	out.reserve(steps + 1);
 	GeodesicState s = start;
@@ -151,9 +122,8 @@ integrateGeodesic(const ParamSurface &surf, const GeodesicState &start,
 	return out;
 }
 
-static inline bool solveShooting(const ParamSurface &surf, double u0, double v0,
-                                 double u1, double v1, double &du0,
-                                 double &dv0) {
+bool solveShooting(const ParamSurface &surf, double u0, double v0, double u1,
+	              double v1, double &du0, double &dv0) {
 	const int steps = 160;
 	for (int iter = 0; iter < 8; iter++) {
 		const GeodesicState s0{u0, v0, du0, dv0};
@@ -188,141 +158,10 @@ static inline bool solveShooting(const ParamSurface &surf, double u0, double v0,
 	return false;
 }
 
-static inline ObjNormalizeTransform
-computeNormalizeTransform(const std::vector<Vec3> &verts) {
-	ObjNormalizeTransform out;
-	if (verts.empty())
-		return out;
+} // namespace
 
-	Vec3 minV{std::numeric_limits<double>::infinity(),
-	          std::numeric_limits<double>::infinity(),
-	          std::numeric_limits<double>::infinity()};
-	Vec3 maxV{-std::numeric_limits<double>::infinity(),
-	          -std::numeric_limits<double>::infinity(),
-	          -std::numeric_limits<double>::infinity()};
-
-	for (const auto &v : verts) {
-		minV.x = std::min(minV.x, v.x);
-		minV.y = std::min(minV.y, v.y);
-		minV.z = std::min(minV.z, v.z);
-		maxV.x = std::max(maxV.x, v.x);
-		maxV.y = std::max(maxV.y, v.y);
-		maxV.z = std::max(maxV.z, v.z);
-	}
-
-	out.center = {(minV.x + maxV.x) * 0.5, (minV.y + maxV.y) * 0.5,
-	              (minV.z + maxV.z) * 0.5};
-	const double sx = maxV.x - minV.x;
-	const double sy = maxV.y - minV.y;
-	const double sz = maxV.z - minV.z;
-	const double maxSize = std::max({sx, sy, sz});
-	out.scale = (maxSize > 1e-12) ? (2.0 / maxSize) : 1.0;
-	return out;
-}
-
-static inline TorusParams estimateTorusParams(const std::vector<Vec3> &verts) {
-	TorusParams out;
-	if (verts.empty())
-		return out;
-
-	const ObjNormalizeTransform t = computeNormalizeTransform(verts);
-	out.center = t.center;
-
-	double sumR = 0.0;
-	int countR = 0;
-	std::vector<double> rSamples;
-	rSamples.reserve(verts.size());
-	for (const auto &v : verts) {
-		const double dx = v.x - out.center.x;
-		const double dy = v.y - out.center.y;
-		const double dz = v.z - out.center.z;
-		const double rho = std::sqrt(dx * dx + dy * dy);
-		if (std::isfinite(rho)) {
-			sumR += rho;
-			countR++;
-		}
-		rSamples.push_back(std::sqrt(std::pow(rho, 2) + std::pow(dz, 2)));
-	}
-	if (countR > 0)
-		out.majorRadius = sumR / countR;
-
-	double sumr = 0.0;
-	int countr = 0;
-	for (const auto &v : verts) {
-		const double dx = v.x - out.center.x;
-		const double dy = v.y - out.center.y;
-		const double dz = v.z - out.center.z;
-		const double rho = std::sqrt(dx * dx + dy * dy);
-		const double rr = std::sqrt(
-		    (rho - out.majorRadius) * (rho - out.majorRadius) + dz * dz);
-		if (std::isfinite(rr)) {
-			sumr += rr;
-			countr++;
-		}
-	}
-	if (countr > 0)
-		out.minorRadius = sumr / countr;
-
-	if (!std::isfinite(out.majorRadius) || out.majorRadius <= 1e-6)
-		out.majorRadius = 1.0;
-	if (!std::isfinite(out.minorRadius) || out.minorRadius <= 1e-6)
-		out.minorRadius = 0.25;
-	return out;
-}
-
-static inline SaddleParams
-estimateSaddleParams(const std::vector<Vec3> &verts) {
-	SaddleParams out;
-	if (verts.empty())
-		return out;
-
-	const ObjNormalizeTransform t = computeNormalizeTransform(verts);
-	out.center = t.center;
-
-	double num = 0.0;
-	double den = 0.0;
-	for (const auto &v : verts) {
-		const double x = v.x - out.center.x;
-		const double y = v.y - out.center.y;
-		const double z = v.z - out.center.z;
-		const double txy = x * x - y * y;
-		if (std::isfinite(txy) && std::isfinite(z)) {
-			num += txy * z;
-			den += txy * txy;
-		}
-	}
-	if (den > 1e-12)
-		out.a = num / den;
-	if (!std::isfinite(out.a))
-		out.a = 0.5;
-	return out;
-}
-
-static inline Vec3 applyNormalize(const ObjNormalizeTransform &t,
-                                  const Vec3 &p) {
-	return vmul(vsub(p, t.center), t.scale);
-}
-
-static inline std::string basenameOnly(const std::string &path) {
-	std::string s = path;
-	for (auto &ch : s) {
-		if (ch == '\\')
-			ch = '/';
-	}
-	const auto slash = s.find_last_of('/');
-	return (slash == std::string::npos) ? s : s.substr(slash + 1);
-}
-
-static inline std::string lowerAscii(std::string s) {
-	for (auto &c : s) {
-		if (c >= 'A' && c <= 'Z')
-			c = char(c - 'A' + 'a');
-	}
-	return s;
-}
-
-static inline AnalyticsCurve makePlaneGeodesic(const Vec3 &p1, const Vec3 &p2,
-                                               int samples) {
+AnalyticsCurve makePlaneGeodesic(const Vec3 &p1, const Vec3 &p2,
+	                             int samples) {
 	AnalyticsCurve c;
 	c.name = "plane_straight_line";
 	c.points.reserve(std::max(2, samples));
@@ -335,8 +174,8 @@ static inline AnalyticsCurve makePlaneGeodesic(const Vec3 &p1, const Vec3 &p2,
 	return c;
 }
 
-static inline AnalyticsCurve
-makeSphereGreatCircle(const Vec3 &p1, const Vec3 &p2, int samples) {
+AnalyticsCurve makeSphereGreatCircle(const Vec3 &p1, const Vec3 &p2,
+	                                 int samples) {
 	AnalyticsCurve c;
 	c.name = "sphere_great_circle";
 	c.points.reserve(std::max(2, samples));
@@ -356,9 +195,6 @@ makeSphereGreatCircle(const Vec3 &p1, const Vec3 &p2, int samples) {
 
 	const int n = std::max(2, samples);
 
-	// Special-case antipodal points.
-	// Renormalized lerp between a and -a hits the zero vector at t=0.5, which
-	// collapses to the origin and draws a line through the center.
 	const bool nearAntipodal = (M_PI - theta) <= 1e-5;
 	const bool nearIdentical = theta <= 1e-8;
 	const bool useLerp =
@@ -373,8 +209,6 @@ makeSphereGreatCircle(const Vec3 &p1, const Vec3 &p2, int samples) {
 	}
 
 	if (nearAntipodal) {
-		// Choose an arbitrary axis perpendicular to a to define one of the
-		// infinitely many great circles connecting antipodal points.
 		Vec3 ref = (std::fabs(a.x) < 0.9) ? Vec3{1, 0, 0} : Vec3{0, 1, 0};
 		Vec3 u = vnormalize(vcross(a, ref));
 		if (vlen(u) <= 1e-8) {
@@ -410,10 +244,9 @@ makeSphereGreatCircle(const Vec3 &p1, const Vec3 &p2, int samples) {
 	return c;
 }
 
-static inline AnalyticsCurve makeTorusApproxGeodesic(const Vec3 &p1,
-                                                     const Vec3 &p2,
-                                                     const TorusParams &torus,
-                                                     int samples) {
+AnalyticsCurve makeTorusApproxGeodesic(const Vec3 &p1, const Vec3 &p2,
+	                                   const TorusParams &torus,
+	                                   int samples) {
 	AnalyticsCurve c;
 	c.name = "torus_geodesic";
 	const int n = std::max(2, samples);
@@ -464,7 +297,6 @@ static inline AnalyticsCurve makeTorusApproxGeodesic(const Vec3 &p1,
 	}
 
 	if (!ok && c.points.size() >= 2) {
-		// fallback: straight param interpolation if shooting fails
 		c.points.clear();
 		for (int i = 0; i < n; i++) {
 			const double t = (n == 1) ? 0.0 : (double)i / (double)(n - 1);
@@ -486,9 +318,9 @@ static inline AnalyticsCurve makeTorusApproxGeodesic(const Vec3 &p1,
 	return c;
 }
 
-static inline AnalyticsCurve
-makeSaddleApproxGeodesic(const Vec3 &p1, const Vec3 &p2,
-                         const SaddleParams &saddle, int samples) {
+AnalyticsCurve makeSaddleApproxGeodesic(const Vec3 &p1, const Vec3 &p2,
+	                                   const SaddleParams &saddle,
+	                                   int samples) {
 	AnalyticsCurve c;
 	c.name = "saddle_geodesic";
 	const int n = std::max(2, samples);
@@ -537,5 +369,3 @@ makeSaddleApproxGeodesic(const Vec3 &p1, const Vec3 &p2,
 	c.length = length;
 	return c;
 }
-
-
