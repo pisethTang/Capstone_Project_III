@@ -30,7 +30,7 @@ type AnalyticsJson = {
 
 type HeatJson = AnalyticsJson;
 
-function parseObj(objText: string): ParsedObj {
+export function parseObj(objText: string): ParsedObj {
     const vertices: THREE.Vector3[] = [];
     const triangles: number[] = [];
 
