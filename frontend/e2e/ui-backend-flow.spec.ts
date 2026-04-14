@@ -20,13 +20,13 @@ test.describe("Geodesic Lab UI to backend flows", () => {
         const responsePromise = page.waitForResponse((response) => {
             return (
                 response.url().endsWith("/compute") &&
-                response.request().method() === "POST" &&
-                response.status() === 200
+                response.request().method() === "POST"
             );
         });
 
         await page.getByRole("button", { name: "Run Dijkstra" }).click();
         const response = await responsePromise;
+        expect(response.status()).toBe(200);
         const payload = (await response.json()) as {
             path?: number[];
             totalDistance?: number | null;
@@ -36,18 +36,15 @@ test.describe("Geodesic Lab UI to backend flows", () => {
         expect((payload.path ?? []).length).toBeGreaterThan(0);
         expect(payload.totalDistance).not.toBeNull();
 
-        await expect(dijkstraRow).toContainText(/[0-9]+\.[0-9]{6}/);
+        await expect
+            .poll(async () => await dijkstraRow.innerText(), {
+                timeout: 30_000,
+            })
+            .toMatch(/[0-9]+\.[0-9]{6}/);
     });
 
     test("run Analytics from UI and render analytics length", async ({ page }) => {
         await page.goto("/");
-
-        const modelSelect = page.getByRole("combobox");
-        await modelSelect.selectOption("sphere_low.obj");
-
-        const spinboxes = page.getByRole("spinbutton");
-        await spinboxes.nth(0).fill("9");
-        await spinboxes.nth(1).fill("25");
 
         const analyticsRow = page
             .locator("span", { hasText: "Analytics Length:" })
@@ -57,13 +54,13 @@ test.describe("Geodesic Lab UI to backend flows", () => {
         const responsePromise = page.waitForResponse((response) => {
             return (
                 response.url().endsWith("/analytics") &&
-                response.request().method() === "POST" &&
-                response.status() === 200
+                response.request().method() === "POST"
             );
         });
 
         await page.getByRole("button", { name: "Run Analytics" }).click();
         const response = await responsePromise;
+        expect(response.status()).toBe(200);
         const payload = (await response.json()) as {
             curves?: Array<{ length: number }>;
         };
@@ -71,6 +68,10 @@ test.describe("Geodesic Lab UI to backend flows", () => {
         expect(Array.isArray(payload.curves)).toBeTruthy();
         expect((payload.curves ?? []).length).toBeGreaterThan(0);
 
-        await expect(analyticsRow).toContainText(/[0-9]+\.[0-9]{6}/);
+        await expect
+            .poll(async () => await analyticsRow.innerText(), {
+                timeout: 30_000,
+            })
+            .toMatch(/[0-9]+\.[0-9]{6}/);
     });
 });

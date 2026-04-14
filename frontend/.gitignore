@@ -27,3 +27,6 @@ dist-ssr
 playwright-report/
 test-results/
 playwright/.cache/
+
+# Vitest coverage artifacts
+coverage/

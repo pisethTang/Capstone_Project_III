@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  cpp-tests:
+    name: C++ Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install C++ test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libgtest-dev
+
+      - name: Configure CMake
+        run: cmake -S . -B build-tests
+
+      - name: Build C++ tests
+        run: cmake --build build-tests -j$(nproc)
+
+      - name: Run C++ tests
+        run: ctest --test-dir build-tests --output-on-failure
+
+  backend-tests:
+    name: Backend Go Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - name: Run backend tests
+        run: cd backend && go test ./...
+
+  frontend-tests:
+    name: Frontend Unit + E2E
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Go (for e2e backend webServer)
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Install Playwright browser
+        run: cd frontend && npx playwright install --with-deps chromium
+
+      - name: Generate frontend coverage report
+        run: cd frontend && npm run test:coverage
+
+      - name: Build C++ engine for e2e
+        run: |
+          g++ -O2 -std=c++17 -o main main.cpp \
+            src/algorithms/dijkstra_solver.cpp \
+            src/algorithms/heat_method.cpp \
+            src/analytics/analytic_service.cpp \
+            src/analytics/analytic_surface_curves.cpp \
+            src/analytics/analytic_normalization.cpp \
+            src/analytics/analytic_string_utils.cpp \
+            src/io/analytics_json_writer.cpp \
+            src/io/obj_loader.cpp \
+            src/io/result_json_writer.cpp \
+            src/mesh/adjacency_builder.cpp
+
+      - name: Run frontend e2e tests
+        run: cd frontend && npm run test:e2e
+
+      - name: Upload frontend coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+          if-no-files-found: warn
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: warn

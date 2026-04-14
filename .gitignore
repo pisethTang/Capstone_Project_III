@@ -7,6 +7,7 @@ build/
 # all cache files 
 **/__pycache__/
 backend/*debug*
+backend/app
 
 
 # build tests folder from cmake 
