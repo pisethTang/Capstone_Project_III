@@ -1,43 +1,38 @@
+// Third-party imports
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useCallback, useRef, useState } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+
+
+
+// Import defined components
 import Axes from "../components/Axes";
 import GeodesicMesh from "../components/GeodesicMesh";
 
-const MODELS = [
-    { name: "Icosahedron", file: "icosahedron.obj", up: "z" as const },
-    { name: "Square", file: "zig_zag.obj", up: "z" as const },
-    // Stanford bunny is commonly authored as Y-up.
-    { name: "Bunny", file: "stanford-bunny.obj", up: "y" as const },
-    { name: "Plane Grid", file: "plane.obj" },
-    { name: "Sphere", file: "sphere.obj" },
-    { name: "Sphere (Low Res)", file: "sphere_low.obj" },
-    { name: "Torus", file: "donut.obj" },
-    { name: "Saddle", file: "saddle.obj" }, // hyperbolic paraboloid (pringle-shaped)
-];
 
-type DijkstraJson = {
-    inputFileName?: string;
-    reachable?: boolean;
-    totalDistance: number | null;
-    path: number[];
-    allDistances: number[];
-};
 
-type AnalyticsJson = {
-    inputFileName?: string;
-    startId: number;
-    endId: number;
-    surfaceType: string;
-    error?: string;
-    curves: Array<{
-        name: string;
-        length: number;
-        points: number[][];
-    }>;
-};
+// Import styles
+import { uiContainerStyle } from "./assets/styles/uiContainerStyle";
+import { resetViewStyle } from "./assets/styles/resetViewStyle";
+import { inputStyle } from "./assets/styles/inputStyle";
+import { buttonStyle } from "./assets/styles/buttonStyle";
+
+
+
+
+
+// Model options (name + corresponding OBJ file in public/data)
+import { MODELS } from "./assets/MODELS";
+
+
+
+
+// Import types 
+import type { DijkstraJson } from "./types/DijkstraJson";
+import type { AnalyticsJson } from "./types/AnalyticsJson";
+
 
 type HeatJson = AnalyticsJson;
 
@@ -199,34 +194,7 @@ export default function App() {
         }
     };
 
-    // const handleHeat = async () => {
-    //     setHeatLoading(true);
-    //     setHeatLength(null);
-    //     setHeatData(null);
-    //     const data = {
-    //         start: startId,
-    //         end: endId,
-    //         model: modelFile,
-    //     };
-    //     try {
-    //         const response = await fetch(`${apiBase}/heat`, {
-    //             method: "POST",
-    //             headers: { "Content-Type": "application/json" },
-    //             body: JSON.stringify(data),
-    //         });
-
-    //         if (response.ok) {
-    //             const payload = (await response.json()) as HeatJson;
-    //             setHeatData(payload);
-    //         } else {
-    //             console.error("ERROR Response: ", response);
-    //         }
-    //     } catch (error) {
-    //         console.error("Failed to send POST: ", error);
-    //     } finally {
-    //         setHeatLoading(false);
-    //     }
-    // };
+   
 
     const handleResetView = useCallback(() => {
         const camera = cameraRef.current;
@@ -354,14 +322,7 @@ export default function App() {
                               ? analyticsLength.toFixed(6)
                               : "—"}
                     </div>
-                    {/* <div>
-                        <span style={{ color: "#aaa" }}>Heat Length:</span>{" "}
-                        {heatLength == null
-                            ? "—"
-                            : Number.isFinite(heatLength)
-                              ? heatLength.toFixed(6)
-                              : "—"}
-                    </div> */}
+                   
                 </div>
 
                 <div style={{ marginTop: "8px" }}>
@@ -415,18 +376,7 @@ export default function App() {
                     {analyticsLoading ? "Computing ..." : "Run Analytics"}
                 </button>
 
-                {/* <button
-                    onClick={handleHeat}
-                    disabled={heatLoading}
-                    style={{
-                        ...buttonStyle,
-                        marginTop: 8,
-                        background: "#00bcd4",
-                        color: "#0b1114",
-                    }}
-                >
-                    {heatLoading ? "Computing ..." : "Run Heat Method"}
-                </button> */}
+               
 
                 <div
                     style={{
@@ -462,17 +412,7 @@ export default function App() {
                             ? "Hide Analytics Path"
                             : "Show Analytics Path"}
                     </button>
-                    {/* <button
-                        onClick={() => setShowHeatPath((v) => !v)}
-                        style={{
-                            ...buttonStyle,
-                            marginTop: 0,
-                            background: showHeatPath ? "#00bcd4" : "#333",
-                            color: showHeatPath ? "#0b1114" : "#fff",
-                        }}
-                    >
-                        {showHeatPath ? "Hide Heat Path" : "Show Heat Path"}
-                    </button> */}
+                   
                 </div>
 
                 <div
@@ -608,52 +548,3 @@ export default function App() {
         </div>
     );
 }
-
-// https://github.com/alecjacobson/common-3d-test-models/tree/master
-
-// Simple styles (move to CSS later)
-const uiContainerStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    zIndex: 10,
-    background: "rgba(0,0,0,0.85)",
-    padding: 14,
-    borderRadius: 8,
-    color: "white",
-    fontSize: 13,
-    lineHeight: 1.2,
-    maxHeight: "calc(100vh - 24px)",
-};
-const inputStyle: React.CSSProperties = {
-    background: "#333",
-    color: "white",
-    border: "1px solid #555",
-    padding: "4px",
-    width: "100%",
-};
-const buttonStyle: React.CSSProperties = {
-    marginTop: "10px",
-    width: "100%",
-    padding: "8px",
-    background: "#f00",
-    color: "white",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold",
-};
-
-const resetViewStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    zIndex: 11,
-    padding: "8px 12px",
-    background: "rgba(47, 92, 255, 0.92)",
-    color: "#fff",
-    border: "none",
-    borderRadius: 6,
-    cursor: "pointer",
-    fontWeight: 700,
-    boxShadow: "0 6px 16px rgba(0,0,0,0.35)",
-};
