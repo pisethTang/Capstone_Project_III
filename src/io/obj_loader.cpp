@@ -24,7 +24,8 @@ bool loadOBJIntoMesh(const std::string &filename, Mesh &mesh,
 			Vec3 v;
 			iss >> v.x >> v.y >> v.z;
 			mesh.vertices.push_back(v);
-		} else if (type == "f") {
+		}
+		else if (type == "f") {
 			std::vector<std::string> tokens;
 			std::string token;
 			while (iss >> token) {

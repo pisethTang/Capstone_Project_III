@@ -31,6 +31,8 @@ class MeshEngine {
 };
 
 int main(int argc, char *argv[]) {
+
+	
 	// accept cmd line arguments
 
 	if (argc < 4) {
@@ -52,7 +54,6 @@ int main(int argc, char *argv[]) {
 	MeshEngine engine;
 	// std::string fileName = "./frontend/public/data/icosahedron.obj";
 
-	// We will load the failing dataset
 	if (!engine.loadOBJ(fileName)) {
 		std::cerr << "Error: Could not find " << fileName << std::endl;
 		return 1;
@@ -61,10 +62,10 @@ int main(int argc, char *argv[]) {
 	std::string outputPath = "./frontend/public/";
 	std::string inputFileName = fileName;
 
-	if (mode == "analytics") {
-		AnalyticsResult analytics = computeAnalyticsForModel(
-		    inputFileName, startVertexIndex, endVertexIndex, engine.mesh.vertices,
-		    engine.mesh.faces);
+	if (mode == "analytics") { // analytics method 
+		AnalyticsResult analytics = computeAnalyticsForModel(inputFileName, startVertexIndex, 
+															endVertexIndex, engine.mesh.vertices,
+		    												engine.mesh.faces);
 		writeAnalyticsJSON("analytics.json", outputPath, analytics);
 		std::cout << "--- Geodesic Lab: Analytics ---" << std::endl;
 		if (!analytics.error.empty()) {
@@ -76,11 +77,9 @@ int main(int argc, char *argv[]) {
 		std::cout << "------------------------------" << std::endl;
 		return analytics.error.empty() ? 0 : 2;
 	}
-
-	if (mode == "heat") {
-		AnalyticsResult heat =
-		    computeHeatForModel(inputFileName, startVertexIndex, endVertexIndex,
-		                        engine.mesh.vertices, engine.mesh.faces);
+	else if (mode == "heat") { // heat method 
+		AnalyticsResult heat = computeHeatForModel(inputFileName, startVertexIndex, endVertexIndex,
+		                        					engine.mesh.vertices, engine.mesh.faces);
 		writeAnalyticsJSON("heat_result.json", outputPath, heat);
 		std::cout << "--- Geodesic Lab: Heat Method ---" << std::endl;
 		if (!heat.error.empty()) {
@@ -92,26 +91,24 @@ int main(int argc, char *argv[]) {
 		std::cout << "--------------------------------" << std::endl;
 		return heat.error.empty() ? 0 : 2;
 	}
-
-	// int startVertexIndex = 0;
-	// int endVertexIndex =
-	//     11; // Adjust this based on your specific OBJ vertex count;
-	// Start: Vertex 0 (0,0,0) | Target: Vertex 2 (1,1,0)
-	DijkstraResult result =
-	    solveDijkstra(engine.mesh, startVertexIndex, endVertexIndex);
-
-	std::cout << "--- Geodesic Lab: Dijkstra Test ---" << std::endl;
-	if (!result.reachable) {
-		std::cout << "Target Distance: (unreachable)" << std::endl;
-	} else {
-		std::cout << "Target Distance: " << result.totalDistance << std::endl;
-	}
-	std::cout << "Path: ";
-	for (int v : result.path)
+	else { // Dijkstra's method
+		DijkstraResult result = solveDijkstra(engine.mesh, startVertexIndex, endVertexIndex);
+		
+		std::cout << "--- Geodesic Lab: Dijkstra Test ---" << std::endl;
+		if (!result.reachable) {
+			std::cout << "Target Distance: (unreachable)" << std::endl;
+		} else {
+			std::cout << "Target Distance: " << result.totalDistance << std::endl;
+		}
+		std::cout << "Path: ";
+		for (int v : result.path)
 		std::cout << v << " ";
-	std::cout << "\n-----------------------------------" << std::endl;
-	writeResultJSON("result.json", outputPath, inputFileName,
-	                result.allDistances, result);
+		std::cout << "\n-----------------------------------" << std::endl;
+		writeResultJSON("result.json", outputPath, inputFileName,
+			result.allDistances, result);
+	}
+
+
 
 	return 0;
 }

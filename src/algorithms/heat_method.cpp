@@ -218,8 +218,7 @@ AnalyticsCurve makeHeatMethodGeodesic(const std::vector<Vec3> &verts,
 
 	std::vector<double> rhs = div;
 	rhs[startId] = 0.0;
-	const bool okPoisson =
-	    conjugateGradient(applyLConstrained, rhs, phi, 1000, 1e-6);
+	const bool okPoisson = conjugateGradient(applyLConstrained, rhs, phi, 1000, 1e-6);
 	(void)okPoisson;
 
 	// Shift so source is zero and ensure non-negative

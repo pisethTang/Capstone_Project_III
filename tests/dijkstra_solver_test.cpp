@@ -26,10 +26,18 @@ Mesh makeMesh(const std::vector<Vec3> &vertices,
 
 } // namespace
 
-TEST(DijkstraSolverTest, StartEqualsTargetReturnsZeroDistanceAndSingleNodePath) {
-	const Mesh mesh = makeMesh({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}, {{0, 1}});
 
-	const DijkstraResult result = solveDijkstra(mesh, 0, 0);
+
+// Tests for Dijkstra solver behavior on small synthetic meshes.
+TEST(DijkstraSolverTest, StartEqualsTargetReturnsZeroDistanceAndSingleNodePath) {
+	const Mesh mesh = makeMesh(
+		{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}, 
+		{{0, 1}}
+	);
+	// same starting point
+	int startVertex = 0;
+	int endVertex = 0;
+	const DijkstraResult result = solveDijkstra(mesh, startVertex, endVertex);
 
 	ASSERT_TRUE(result.reachable);
 	EXPECT_DOUBLE_EQ(result.totalDistance, 0.0);
@@ -39,6 +47,7 @@ TEST(DijkstraSolverTest, StartEqualsTargetReturnsZeroDistanceAndSingleNodePath) 
 	EXPECT_DOUBLE_EQ(result.allDistances[0], 0.0);
 }
 
+// Tests that when the target vertex is unreachable from the start, the result indicates unreachable and the path is empty.
 TEST(DijkstraSolverTest, DisconnectedGraphReturnsUnreachableWithEmptyPath) {
 	const Mesh mesh =
 	    makeMesh({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {5.0, 0.0, 0.0}}, {{0, 1}});
@@ -54,6 +63,8 @@ TEST(DijkstraSolverTest, DisconnectedGraphReturnsUnreachableWithEmptyPath) {
 		  std::numeric_limits<double>::max() / 2.0);
 }
 
+
+// Tests that when multiple paths exist, the solver chooses the one with the lowest total weight.
 TEST(DijkstraSolverTest, ChoosesLowerWeightRouteOverAlternativePath) {
 	const Mesh mesh = makeMesh(
 	    {
@@ -77,6 +88,8 @@ TEST(DijkstraSolverTest, ChoosesLowerWeightRouteOverAlternativePath) {
 	EXPECT_NEAR(result.totalDistance, 2.0, 1e-12);
 }
 
+
+// Tests that the allDistances vector in the result has the same size as the number of vertices and contains finite values for reachable vertices.
 TEST(DijkstraSolverTest, AllDistancesVectorMatchesVertexCountAndIsFiniteForReachable) {
 	const Mesh mesh = makeMesh(
 	    {
