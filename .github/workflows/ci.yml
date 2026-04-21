@@ -16,7 +16,7 @@ jobs:
       - name: Install C++ test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++ libgtest-dev
+          sudo apt-get install -y cmake g++ libgtest-dev libeigen3-dev
 
       - name: Configure CMake
         run: cmake -S . -B build-tests
@@ -63,6 +63,11 @@ jobs:
         with:
           go-version-file: backend/go.mod
 
+      - name: Install C++ build dependencies for e2e
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libeigen3-dev
+
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
@@ -74,17 +79,8 @@ jobs:
 
       - name: Build C++ engine for e2e
         run: |
-          g++ -O2 -std=c++17 -o main main.cpp \
-            src/algorithms/dijkstra_solver.cpp \
-            src/algorithms/heat_method.cpp \
-            src/analytics/analytic_service.cpp \
-            src/analytics/analytic_surface_curves.cpp \
-            src/analytics/analytic_normalization.cpp \
-            src/analytics/analytic_string_utils.cpp \
-            src/io/analytics_json_writer.cpp \
-            src/io/obj_loader.cpp \
-            src/io/result_json_writer.cpp \
-            src/mesh/adjacency_builder.cpp
+          cmake -S . -B build-e2e -DBUILD_TESTING=OFF
+          cmake --build build-e2e --target geodesic_engine -j
 
       - name: Run frontend e2e tests
         run: cd frontend && npm run test:e2e

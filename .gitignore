@@ -6,13 +6,13 @@ build-engine/
 
 
 # all cache files 
-**/__pycache__/
+**/__pycache__/**
 backend/*debug*
 backend/app
 
 
 # build tests folder from cmake 
-build-tests/
+**/build-tests**/
 
 
 .env*

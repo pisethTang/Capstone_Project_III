@@ -10,6 +10,19 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
+# Resolve Eigen headers from either a sibling checkout or the system package.
+set(GEODESIC_EIGEN_DIR "")
+if(EXISTS "${CMAKE_SOURCE_DIR}/../eigen/Eigen/Core")
+	set(GEODESIC_EIGEN_DIR "${CMAKE_SOURCE_DIR}/../eigen")
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/eigen/Eigen/Core")
+	set(GEODESIC_EIGEN_DIR "${CMAKE_SOURCE_DIR}/eigen")
+elseif(EXISTS "/usr/include/eigen3/Eigen/Core")
+	set(GEODESIC_EIGEN_DIR "/usr/include/eigen3")
+else()
+	message(FATAL_ERROR
+		"Eigen headers not found. Expected one of: ${CMAKE_SOURCE_DIR}/../eigen, ${CMAKE_SOURCE_DIR}/eigen, or /usr/include/eigen3")
+endif()
+
 set(GEODESIC_ENGINE_SOURCES
 	src/algorithms/dijkstra_solver.cpp
 	src/algorithms/heat_method.cpp
@@ -30,7 +43,7 @@ add_executable(geodesic_engine
 
 target_include_directories(geodesic_engine
 	PRIVATE
-		"${CMAKE_SOURCE_DIR}/../eigen"
+		"${GEODESIC_EIGEN_DIR}"
 )
 
 set_target_properties(geodesic_engine PROPERTIES
