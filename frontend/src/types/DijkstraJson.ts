@@ -4,4 +4,5 @@ export type DijkstraJson = {
     totalDistance: number | null;
     path: number[];
     allDistances: number[];
+    elapsedMs?: number;
 }; 

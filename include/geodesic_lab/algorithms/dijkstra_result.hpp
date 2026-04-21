@@ -8,4 +8,5 @@ struct DijkstraResult {
 	bool reachable;
 	std::vector<int> path;
 	std::vector<double> allDistances;
+	double elapsedMs = 0.0;
 };

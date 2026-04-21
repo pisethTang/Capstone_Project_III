@@ -3,11 +3,13 @@
 
 #include <algorithm>
 #include <cmath>
-#include <functional>
 #include <limits>
 #include <queue>
 #include <unordered_map>
 #include <vector>
+
+#include <Eigen/Sparse>
+#include <Eigen/SparseCholesky>
 
 namespace {
 
@@ -20,47 +22,6 @@ double cotangent(const Vec3 &a, const Vec3 &b, const Vec3 &c) {
 	if (denom <= 1e-12)
 		return 0.0;
 	return vdot(u, v) / denom;
-}
-
-bool conjugateGradient(const std::function<void(const std::vector<double> &,
-                                                std::vector<double> &)> &applyA,
-                      const std::vector<double> &b, std::vector<double> &x,
-                      int maxIter, double tol) {
-	const size_t n = b.size();
-	std::vector<double> r(n, 0.0), p(n, 0.0), Ap(n, 0.0);
-	applyA(x, Ap);
-	for (size_t i = 0; i < n; i++) {
-		r[i] = b[i] - Ap[i];
-		p[i] = r[i];
-	}
-	double rsold = 0.0;
-	for (double v : r)
-		rsold += v * v;
-	if (std::sqrt(rsold) < tol)
-		return true;
-	for (int iter = 0; iter < maxIter; iter++) {
-		applyA(p, Ap);
-		double alphaDen = 0.0;
-		for (size_t i = 0; i < n; i++)
-			alphaDen += p[i] * Ap[i];
-		if (std::fabs(alphaDen) < 1e-20)
-			break;
-		const double alpha = rsold / alphaDen;
-		for (size_t i = 0; i < n; i++)
-			x[i] += alpha * p[i];
-		for (size_t i = 0; i < n; i++)
-			r[i] -= alpha * Ap[i];
-		double rsnew = 0.0;
-		for (double v : r)
-			rsnew += v * v;
-		if (std::sqrt(rsnew) < tol)
-			return true;
-		const double beta = rsnew / rsold;
-		for (size_t i = 0; i < n; i++)
-			p[i] = r[i] + beta * p[i];
-		rsold = rsnew;
-	}
-	return false;
 }
 
 } // namespace
@@ -129,34 +90,54 @@ AnalyticsCurve makeHeatMethodGeodesic(const std::vector<Vec3> &verts,
 	const double h = (edgeCount > 0) ? (edgeSum / edgeCount) : 1.0;
 	const double t = h * h;
 
-	std::vector<double> b(n, 0.0), u(n, 0.0);
+	// Build Eigen sparse Laplacian L and mass matrix M
+	std::vector<Eigen::Triplet<double>> triplets;
+	for (int i = 0; i < n; i++) {
+		double diag = 0.0;
+		for (const auto &kv : weights[i]) {
+			int j = kv.first;
+			double w = kv.second;
+			triplets.emplace_back(i, j, -w);
+			diag += w;
+		}
+		triplets.emplace_back(i, i, diag);
+	}
+
+	Eigen::SparseMatrix<double> L(n, n);
+	L.setFromTriplets(triplets.begin(), triplets.end());
+	L.makeCompressed();
+
+	Eigen::SparseMatrix<double> M(n, n);
+	{
+		std::vector<Eigen::Triplet<double>> mt;
+		mt.reserve(n);
+		for (int i = 0; i < n; i++) {
+			mt.emplace_back(i, i, mass[i]);
+		}
+		M.setFromTriplets(mt.begin(), mt.end());
+		M.makeCompressed();
+	}
+
+	// Solve heat equation: (M - t*L) u = b
+	Eigen::VectorXd b = Eigen::VectorXd::Zero(n);
 	if (mass[startId] <= 1e-12)
 		return c;
 	b[startId] = mass[startId];
 
-	auto applyL = [&](const std::vector<double> &x, std::vector<double> &out) {
-		out.assign(n, 0.0);
-		for (int i = 0; i < n; i++) {
-			double sum = 0.0;
-			for (const auto &kv : weights[i]) {
-				sum += kv.second * (x[i] - x[kv.first]);
-			}
-			out[i] = sum;
-		}
-	};
+	Eigen::SparseMatrix<double> A = M - t * L;
+	A.makeCompressed();
 
-	auto applyHeat = [&](const std::vector<double> &x,
-	                     std::vector<double> &out) {
-		std::vector<double> Lx;
-		applyL(x, Lx);
-		out.assign(n, 0.0);
-		for (int i = 0; i < n; i++) {
-			out[i] = mass[i] * x[i] - t * Lx[i];
-		}
-	};
-
-	const bool okHeat = conjugateGradient(applyHeat, b, u, 600, 1e-6);
-	(void)okHeat;
+	Eigen::VectorXd u(n);
+	// Use CG for heat step: robust even for mildly indefinite matrices
+	// and much faster than LU for large sparse systems.
+	{
+		Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower | Eigen::Upper,
+		                         Eigen::DiagonalPreconditioner<double>> cg;
+		cg.setMaxIterations(600);
+		cg.setTolerance(1e-6);
+		cg.compute(A);
+		u = cg.solve(b);
+	}
 
 	// Compute vector field X on faces
 	std::vector<double> div(n, 0.0);
@@ -199,34 +180,67 @@ AnalyticsCurve makeHeatMethodGeodesic(const std::vector<Vec3> &verts,
 		          (cot_i * vdot(vsub(pj, pk), X) + cot_j * vdot(vsub(pi, pk), X));
 	}
 
-	std::vector<double> phi(n, 0.0);
-	auto applyLConstrained = [&](const std::vector<double> &x,
-	                             std::vector<double> &out) {
-		out.assign(n, 0.0);
-		for (int i = 0; i < n; i++) {
-			if (i == startId) {
-				out[i] = x[i];
-				continue;
-			}
-			double sum = 0.0;
-			for (const auto &kv : weights[i]) {
-				sum += kv.second * (x[i] - x[kv.first]);
-			}
-			out[i] = sum;
+	// Solve Poisson equation with Dirichlet constraint at startId
+	// Build constrained Laplacian: zero row/col startId, set diagonal to 1
+	std::vector<Eigen::Triplet<double>> poissonTriplets;
+	for (int i = 0; i < n; i++) {
+		if (i == startId) {
+			poissonTriplets.emplace_back(i, i, 1.0);
+			continue;
 		}
-	};
+		double diag = 0.0;
+		for (const auto &kv : weights[i]) {
+			int j = kv.first;
+			double w = kv.second;
+			if (j == startId) {
+				// phi[startId] == 0, so this term contributes nothing;
+				// just accumulate into diagonal.
+				diag += w;
+			} else {
+				poissonTriplets.emplace_back(i, j, -w);
+				diag += w;
+			}
+		}
+		poissonTriplets.emplace_back(i, i, diag);
+	}
 
-	std::vector<double> rhs = div;
+	Eigen::SparseMatrix<double> Lc(n, n);
+	Lc.setFromTriplets(poissonTriplets.begin(), poissonTriplets.end());
+	Lc.makeCompressed();
+
+	Eigen::VectorXd rhs = Eigen::VectorXd::Zero(n);
+	for (int i = 0; i < n; i++) {
+		rhs[i] = div[i];
+	}
 	rhs[startId] = 0.0;
-	const bool okPoisson = conjugateGradient(applyLConstrained, rhs, phi, 1000, 1e-6);
-	(void)okPoisson;
+
+	Eigen::VectorXd phi(n);
+	bool poissonOk = false;
+	{
+		Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> poissonSolver;
+		poissonSolver.compute(Lc);
+		if (poissonSolver.info() == Eigen::Success) {
+			phi = poissonSolver.solve(rhs);
+			poissonOk = true;
+		}
+	}
+	if (!poissonOk) {
+		Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower | Eigen::Upper,
+		                         Eigen::DiagonalPreconditioner<double>> cg;
+		cg.setMaxIterations(1000);
+		cg.setTolerance(1e-6);
+		cg.compute(Lc);
+		phi = cg.solve(rhs);
+	}
 
 	// Shift so source is zero and ensure non-negative
 	double minPhi = std::numeric_limits<double>::infinity();
-	for (double v : phi)
-		minPhi = std::min(minPhi, v);
-	for (double &v : phi)
-		v -= minPhi;
+	for (int i = 0; i < n; i++) {
+		minPhi = std::min(minPhi, phi[i]);
+	}
+	for (int i = 0; i < n; i++) {
+		phi[i] -= minPhi;
+	}
 
 	// Extract path by greedy descent on vertices
 	std::vector<int> path;

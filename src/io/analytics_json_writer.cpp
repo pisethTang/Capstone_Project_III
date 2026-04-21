@@ -22,6 +22,10 @@ void writeAnalyticsJSON(const std::string &outputFilename,
 	file << "  \"endId\": " << res.endId << ",\n";
 	file << "  \"surfaceType\": \"" << jsonEscape(res.surfaceType)
 	     << "\",\n";
+	file << "  \"surfaceParams\": "
+	     << (res.surfaceParams.empty() ? "null" : res.surfaceParams)
+	     << ",\n";
+	file << "  \"elapsedMs\": " << res.elapsedMs << ",\n";
 	file << "  \"error\": \"" << jsonEscape(res.error) << "\",\n";
 	file << "  \"curves\": [\n";
 

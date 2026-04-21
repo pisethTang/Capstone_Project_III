@@ -13,3 +13,6 @@ backend/app
 
 # build tests folder from cmake 
 build-tests/
+
+
+.env*

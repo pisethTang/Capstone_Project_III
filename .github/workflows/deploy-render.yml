@@ -1,0 +1,41 @@
+name: Deploy to Render
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: render-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            hook_secret_name: RENDER_BACKEND_DEPLOY_HOOK_URL
+          - service: frontend
+            hook_secret_name: RENDER_FRONTEND_DEPLOY_HOOK_URL
+
+    steps:
+      - name: Trigger Render deploy hook
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets[matrix.hook_secret_name] }}
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing GitHub Actions secret: ${{ matrix.hook_secret_name }}"
+            exit 1
+          fi
+
+          echo "Triggering Render deploy for ${{ matrix.service }}..."
+          curl --fail --silent --show-error --request POST "$DEPLOY_HOOK_URL"

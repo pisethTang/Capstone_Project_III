@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 find_package(GTest REQUIRED)
 
 add_library(geodesic_lab_core STATIC
@@ -18,6 +22,7 @@ add_library(geodesic_lab_core STATIC
 target_include_directories(geodesic_lab_core
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/../include
+		${CMAKE_CURRENT_SOURCE_DIR}/../../eigen
 )
 
 add_executable(cpp_unit_tests

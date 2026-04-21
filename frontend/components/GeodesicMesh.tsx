@@ -26,6 +26,15 @@ type AnalyticsJson = {
         length: number;
         points: number[][]; // [[x,y,z],...]
     }>;
+    surfaceParams?: {
+        center?: [number, number, number];
+        majorRadius?: number;
+        minorRadius?: number;
+        radius?: number;
+        a?: number;
+        type?: string;
+    };
+    elapsedMs?: number;
 };
 
 type HeatJson = AnalyticsJson;
@@ -107,6 +116,8 @@ export default function GeodesicMesh({
     showDijkstraPath = true,
     showAnalyticsPath = true,
     showHeatPath = true,
+    showMesh = true,
+    showSmoothSurface = true,
     onVertexCountChange,
     onMeshStatsChange,
     highlightFaceIndex,
@@ -124,6 +135,8 @@ export default function GeodesicMesh({
     showDijkstraPath?: boolean;
     showAnalyticsPath?: boolean;
     showHeatPath?: boolean;
+    showMesh?: boolean;
+    showSmoothSurface?: boolean;
     onVertexCountChange?: (count: number) => void;
     onMeshStatsChange?: (stats: {
         vertexCount: number;
@@ -365,6 +378,55 @@ export default function GeodesicMesh({
         out.computeVertexNormals();
         return out;
     }, [processedMesh, highlightFaceIndex]);
+
+    const smoothSurfaceGeometry = useMemo(() => {
+        if (!activeAnalyticsData) return null;
+        const type = activeAnalyticsData.surfaceType;
+        const p = activeAnalyticsData.surfaceParams;
+        if (!p) return null;
+
+        const center = p.center ?? [0, 0, 0];
+
+        if (type === "torus" && p.majorRadius != null && p.minorRadius != null) {
+            const geom = new THREE.TorusGeometry(
+                p.majorRadius,
+                p.minorRadius,
+                64,
+                128,
+            );
+            geom.translate(center[0], center[1], center[2]);
+            return geom;
+        }
+
+        if (type === "sphere" && p.radius != null) {
+            const geom = new THREE.SphereGeometry(p.radius, 64, 64);
+            geom.translate(center[0], center[1], center[2]);
+            return geom;
+        }
+
+        if (type === "saddle" && p.a != null) {
+            const size = 1.5;
+            const segments = 64;
+            const geom = new THREE.PlaneGeometry(
+                size * 2,
+                size * 2,
+                segments,
+                segments,
+            );
+            const pos = geom.attributes.position as THREE.BufferAttribute;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const z = p.a * (x * x - y * y);
+                pos.setZ(i, z);
+            }
+            geom.computeVertexNormals();
+            geom.translate(center[0], center[1], center[2]);
+            return geom;
+        }
+
+        return null;
+    }, [activeAnalyticsData]);
 
     // Dijkstra path rendering:
     // Use straight cylinder segments between vertices (no spline smoothing), so the path
@@ -703,6 +765,17 @@ export default function GeodesicMesh({
 
     return (
         <group rotation={modelRotation}>
+            {showSmoothSurface && smoothSurfaceGeometry && (
+                <mesh geometry={smoothSurfaceGeometry} renderOrder={1}>
+                    <meshBasicMaterial
+                        color="#ffffff"
+                        transparent
+                        opacity={0.15}
+                        side={THREE.DoubleSide}
+                        depthWrite={false}
+                    />
+                </mesh>
+            )}
             {processedMesh && (
                 <>
                     {highlightedFaceGeometry && (
@@ -722,20 +795,24 @@ export default function GeodesicMesh({
                             />
                         </mesh>
                     )}
-                    <lineSegments>
-                        <primitive object={processedMesh.wireframe} />
-                        <lineBasicMaterial
-                            color="#2aa1ff"
-                            transparent
-                            opacity={0.6}
-                        />
-                    </lineSegments>
-                    <VertexLabels
-                        positions={
-                            processedMesh.geometry.attributes.position
-                                .array as Float32Array
-                        }
-                    />
+                    {showMesh && (
+                        <>
+                            <lineSegments>
+                                <primitive object={processedMesh.wireframe} />
+                                <lineBasicMaterial
+                                    color="#2aa1ff"
+                                    transparent
+                                    opacity={0.6}
+                                />
+                            </lineSegments>
+                            <VertexLabels
+                                positions={
+                                    processedMesh.geometry.attributes.position
+                                        .array as Float32Array
+                                }
+                            />
+                        </>
+                    )}
                 </>
             )}
             {/* Start Point - RED */}

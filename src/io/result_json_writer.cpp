@@ -37,6 +37,7 @@ void writeResultJSON(const std::string &outputFilename,
 		file << res.path[i] << (i == res.path.size() - 1 ? "" : ", ");
 	}
 	file << "],\n";
+	file << "  \"elapsedMs\": " << res.elapsedMs << ",\n";
 	file << "  \"allDistances\": [";
 	for (size_t i = 0; i < all_dists.size(); ++i) {
 		file << all_dists[i] << (i == all_dists.size() - 1 ? "" : ", ");

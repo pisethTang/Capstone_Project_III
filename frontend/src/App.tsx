@@ -59,10 +59,14 @@ export default function App() {
 
     const [totalDistance, setTotalDistance] = useState<number | null>(null);
     const [analyticsLength, setAnalyticsLength] = useState<number | null>(null);
+    const [dijkstraTime, setDijkstraTime] = useState<number | null>(null);
+    const [analyticsTime, setAnalyticsTime] = useState<number | null>(null);
     // const [heatLength, setHeatLength] = useState<number | null>(null);
     const [showDijkstraPath, setShowDijkstraPath] = useState(true);
     const [showAnalyticsPath, setShowAnalyticsPath] = useState(true);
     const [showHeatPath, setShowHeatPath] = useState(true);
+    const [showMesh, setShowMesh] = useState(true);
+    const [showSmoothSurface, setShowSmoothSurface] = useState(true);
 
     const apiBase =
         import.meta.env.VITE_API_BASE?.replace(/\/$/, "") ??
@@ -139,6 +143,7 @@ export default function App() {
     const handleCompute = async () => {
         setLoading(true);
         setTotalDistance(null);
+        setDijkstraTime(null);
         setDijkstraData(null);
         const data = {
             start: startId,
@@ -155,6 +160,9 @@ export default function App() {
             if (response.ok) {
                 const payload = (await response.json()) as DijkstraJson;
                 setDijkstraData(payload);
+                if (Number.isFinite(payload.elapsedMs)) {
+                    setDijkstraTime(payload.elapsedMs ?? null);
+                }
             } else {
                 console.error("ERROR Response: ", response);
             }
@@ -168,6 +176,7 @@ export default function App() {
     const handleAnalytics = async () => {
         setAnalyticsLoading(true);
         setAnalyticsLength(null);
+        setAnalyticsTime(null);
         setAnalyticsData(null);
         const data = {
             start: startId,
@@ -184,6 +193,9 @@ export default function App() {
             if (response.ok) {
                 const payload = (await response.json()) as AnalyticsJson;
                 setAnalyticsData(payload);
+                if (Number.isFinite(payload.elapsedMs)) {
+                    setAnalyticsTime(payload.elapsedMs ?? null);
+                }
             } else {
                 console.error("ERROR Response: ", response);
             }
@@ -261,10 +273,14 @@ export default function App() {
                         setHighlightFace(0);
                         setTotalDistance(null);
                         setAnalyticsLength(null);
+                        setDijkstraTime(null);
+                        setAnalyticsTime(null);
                         // setHeatLength(null);
                         setShowDijkstraPath(true);
                         setShowAnalyticsPath(true);
                         setShowHeatPath(true);
+                        setShowMesh(true);
+                        setShowSmoothSurface(true);
                     }}
                     style={{
                         padding: "5px",
@@ -322,7 +338,22 @@ export default function App() {
                               ? analyticsLength.toFixed(6)
                               : "—"}
                     </div>
-                   
+                    <div>
+                        <span style={{ color: "#aaa" }}>Dijkstra Time:</span>{" "}
+                        {dijkstraTime == null
+                            ? "—"
+                            : Number.isFinite(dijkstraTime)
+                              ? `${dijkstraTime.toFixed(2)} ms`
+                              : "—"}
+                    </div>
+                    <div>
+                        <span style={{ color: "#aaa" }}>Analytics Time:</span>{" "}
+                        {analyticsTime == null
+                            ? "—"
+                            : Number.isFinite(analyticsTime)
+                              ? `${analyticsTime.toFixed(2)} ms`
+                              : "—"}
+                    </div>
                 </div>
 
                 <div style={{ marginTop: "8px" }}>
@@ -412,7 +443,29 @@ export default function App() {
                             ? "Hide Analytics Path"
                             : "Show Analytics Path"}
                     </button>
-                   
+                    <button
+                        onClick={() => setShowMesh((v) => !v)}
+                        style={{
+                            ...buttonStyle,
+                            marginTop: 0,
+                            background: showMesh ? "#2aa1ff" : "#333",
+                        }}
+                    >
+                        {showMesh ? "Hide Mesh" : "Show Mesh"}
+                    </button>
+                    <button
+                        onClick={() => setShowSmoothSurface((v) => !v)}
+                        style={{
+                            ...buttonStyle,
+                            marginTop: 0,
+                            background: showSmoothSurface ? "#e0e0e0" : "#333",
+                            color: showSmoothSurface ? "#111" : "#fff",
+                        }}
+                    >
+                        {showSmoothSurface
+                            ? "Hide Smooth Surface"
+                            : "Show Smooth Surface"}
+                    </button>
                 </div>
 
                 <div
@@ -523,6 +576,8 @@ export default function App() {
                         showDijkstraPath={showDijkstraPath}
                         showAnalyticsPath={showAnalyticsPath}
                         showHeatPath={showHeatPath}
+                        showMesh={showMesh}
+                        showSmoothSurface={showSmoothSurface}
                         onVertexCountChange={handleVertexCountChange}
                         onMeshStatsChange={handleMeshStatsChange}
                         highlightFaceIndex={

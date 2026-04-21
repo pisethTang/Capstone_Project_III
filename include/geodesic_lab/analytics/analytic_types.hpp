@@ -18,4 +18,6 @@ struct AnalyticsResult {
 	std::string surfaceType;
 	std::vector<AnalyticsCurve> curves;
 	std::string error;
+	std::string surfaceParams; // raw JSON object string (e.g. {"center":[0,0,0],...})
+	double elapsedMs = 0.0;
 };

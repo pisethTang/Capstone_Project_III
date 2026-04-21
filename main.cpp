@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -62,10 +63,16 @@ int main(int argc, char *argv[]) {
 	std::string outputPath = "./frontend/public/";
 	std::string inputFileName = fileName;
 
-	if (mode == "analytics") { // analytics method 
-		AnalyticsResult analytics = computeAnalyticsForModel(inputFileName, startVertexIndex, 
+
+	
+
+	if (mode == "analytics") { // analytics method
+		auto t0 = std::chrono::high_resolution_clock::now();
+		AnalyticsResult analytics = computeAnalyticsForModel(inputFileName, startVertexIndex,
 															endVertexIndex, engine.mesh.vertices,
 		    												engine.mesh.faces);
+		auto t1 = std::chrono::high_resolution_clock::now();
+		analytics.elapsedMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
 		writeAnalyticsJSON("analytics.json", outputPath, analytics);
 		std::cout << "--- Geodesic Lab: Analytics ---" << std::endl;
 		if (!analytics.error.empty()) {
@@ -73,13 +80,17 @@ int main(int argc, char *argv[]) {
 		} else {
 			std::cout << "Surface: " << analytics.surfaceType << std::endl;
 			std::cout << "Curves: " << analytics.curves.size() << std::endl;
+			std::cout << "Elapsed: " << analytics.elapsedMs << " ms" << std::endl;
 		}
 		std::cout << "------------------------------" << std::endl;
 		return analytics.error.empty() ? 0 : 2;
 	}
-	else if (mode == "heat") { // heat method 
+	else if (mode == "heat") { // heat method
+		auto t0 = std::chrono::high_resolution_clock::now();
 		AnalyticsResult heat = computeHeatForModel(inputFileName, startVertexIndex, endVertexIndex,
-		                        					engine.mesh.vertices, engine.mesh.faces);
+		                        						engine.mesh.vertices, engine.mesh.faces);
+		auto t1 = std::chrono::high_resolution_clock::now();
+		heat.elapsedMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
 		writeAnalyticsJSON("heat_result.json", outputPath, heat);
 		std::cout << "--- Geodesic Lab: Heat Method ---" << std::endl;
 		if (!heat.error.empty()) {
@@ -87,19 +98,24 @@ int main(int argc, char *argv[]) {
 		} else {
 			std::cout << "Surface: " << heat.surfaceType << std::endl;
 			std::cout << "Curves: " << heat.curves.size() << std::endl;
+			std::cout << "Elapsed: " << heat.elapsedMs << " ms" << std::endl;
 		}
 		std::cout << "--------------------------------" << std::endl;
 		return heat.error.empty() ? 0 : 2;
 	}
 	else { // Dijkstra's method
+		auto t0 = std::chrono::high_resolution_clock::now();
 		DijkstraResult result = solveDijkstra(engine.mesh, startVertexIndex, endVertexIndex);
-		
+		auto t1 = std::chrono::high_resolution_clock::now();
+		result.elapsedMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
+
 		std::cout << "--- Geodesic Lab: Dijkstra Test ---" << std::endl;
 		if (!result.reachable) {
 			std::cout << "Target Distance: (unreachable)" << std::endl;
 		} else {
 			std::cout << "Target Distance: " << result.totalDistance << std::endl;
 		}
+		std::cout << "Elapsed: " << result.elapsedMs << " ms" << std::endl;
 		std::cout << "Path: ";
 		for (int v : result.path)
 		std::cout << v << " ";

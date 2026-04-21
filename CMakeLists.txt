@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 set(GEODESIC_ENGINE_SOURCES
 	src/algorithms/dijkstra_solver.cpp
 	src/algorithms/heat_method.cpp
@@ -22,6 +26,11 @@ set(GEODESIC_ENGINE_SOURCES
 add_executable(geodesic_engine
 	main.cpp
 	${GEODESIC_ENGINE_SOURCES}
+)
+
+target_include_directories(geodesic_engine
+	PRIVATE
+		"${CMAKE_SOURCE_DIR}/../eigen"
 )
 
 set_target_properties(geodesic_engine PROPERTIES

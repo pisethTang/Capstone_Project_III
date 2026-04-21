@@ -9,4 +9,13 @@ export type AnalyticsJson = {
         length: number;
         points: number[][];
     }>;
+    surfaceParams?: {
+        center?: [number, number, number];
+        majorRadius?: number;
+        minorRadius?: number;
+        radius?: number;
+        a?: number;
+        type?: string;
+    };
+    elapsedMs?: number;
 };
