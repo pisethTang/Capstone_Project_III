@@ -1,0 +1,3 @@
+/home/sething2002/Geodesic/Capstone_Project_III/build-debug/CMakeFiles/geodesic_engine.dir
+/home/sething2002/Geodesic/Capstone_Project_III/build-debug/CMakeFiles/edit_cache.dir
+/home/sething2002/Geodesic/Capstone_Project_III/build-debug/CMakeFiles/rebuild_cache.dir

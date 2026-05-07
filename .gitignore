@@ -2,17 +2,18 @@
 .cache/
 build/
 build-engine/
+build-tests/
+build-tests-verify/
 
-
+# build artifacts
+/main
+/dijkstra_engine
+/geodesic_debug
 
 # all cache files 
 **/__pycache__/**
-backend/*debug*
-backend/app
-
 
 # build tests folder from cmake 
 **/build-tests**/
-
 
 .env*

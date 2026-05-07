@@ -48,4 +48,5 @@ void writeAnalyticsJSON(const std::string &outputFilename,
 
 	file << "  ]\n";
 	file << "}\n";
+	std::cout << "Wrote to heat_result.json" << "\n";
 }

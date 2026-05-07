@@ -1,121 +1,70 @@
-# Geodesic Lab
+# Geodesic Engine
 
+C++ engine that computes shortest-path approximations on 3D meshes using Dijkstra, the Heat Method, and analytic geodesic solvers for parametric surfaces.
 
-![alt text](image.png)
+## Build
 
-This project computes and visualizes shortest‑path approximations on 3D meshes using a C++ engine, a Go API server, and a React + Three.js frontend.
-
-## System Flow (End‑to‑End)
-
-### Run Dijkstra
-
-1. You click **Run Dijkstra** in the UI.
-2. The React app sends a POST request to the Go server at /compute.
-3. The Go server runs the C++ engine binary in [main.cpp](main.cpp) with arguments: startId, endId, model path.
-4. The C++ engine loads the OBJ, builds a graph, runs Dijkstra, and writes result.json.
-5. The React app fetches result.json and renders the path in red.
-
-### Run Analytics
-
-1. You click **Run Analytics** in the UI.
-2. The React app sends a POST request to the Go server at /analytics.
-3. The Go server runs the C++ engine with mode analytics.
-4. The C++ engine calls the analytics service in [src/analytics/analytic_service.cpp](src/analytics/analytic_service.cpp), which uses helper solvers in [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp), and writes analytics.json.
-5. The React app fetches analytics.json and renders the path in yellow.
-
-### Diagram
-
-```mermaid
-sequenceDiagram
-    participant UI as React UI (frontend)
-    participant API as Go API (backend)
-    participant CPP as C++ Engine
-    participant FS as frontend/public/*.json
-
-    UI->>API: POST /compute {start,end,model}
-    API->>CPP: exec ./main start end model
-    CPP->>FS: write result.json
-    UI->>FS: fetch result.json
-    UI->>UI: render Dijkstra path (red)
-
-    UI->>API: POST /analytics {start,end,model}
-    API->>CPP: exec ./main start end model analytics
-    CPP->>FS: write analytics.json
-    UI->>FS: fetch analytics.json
-    UI->>UI: render analytic path (yellow)
+```bash
+cmake -S . -B build -DBUILD_TESTING=OFF
+cmake --build build --target geodesic_engine -j
 ```
 
-## Core Algorithms
+The binary is written to `./main`.
+
+## Run
+
+```bash
+# Dijkstra (shortest path along mesh edges)
+./main <start_id> <end_id> <model_path>
+
+# Heat Method (mesh geodesic approximation)
+./main <start_id> <end_id> <model_path> heat
+
+# Analytics (surface-specific analytic solver)
+./main <start_id> <end_id> <model_path> analytics
+```
+
+Example:
+
+```bash
+./main 0 100 ./assets/models/stanford-bunny.obj
+```
+
+Results are written as JSON to the current working directory (`result.json`, `heat_result.json`, `analytics.json`).
+
+## Test
+
+```bash
+cmake -S . -B build-tests
+cmake --build build-tests -j$(nproc)
+ctest --test-dir build-tests --output-on-failure
+```
+
+## Models
+
+Sample OBJ files live in `assets/models/`. You can generate higher-resolution variants with:
+
+```bash
+python -m tools.meshgen.generate --out ./assets/models
+```
+
+## Algorithms
 
 ### 1) Dijkstra on the Mesh Graph
 
-We treat mesh vertices as nodes and edges as graph edges. Each edge weight is the Euclidean length between adjacent vertices. The algorithm computes the shortest path along edges only.
+Treats mesh vertices as nodes and edges as graph edges. Edge weights are Euclidean distances between adjacent vertices.
 
-Given a graph $G=(V,E)$ with edge weights $w(u,v)$, Dijkstra computes distances:
+### 2) Heat Method
 
-$$
-d(s)=0,\quad d(v)=\min_{(u,v)\in E}\{d(u)+w(u,v)\}
-$$
+For general triangle meshes, solves:
+1. Heat equation for a short time $t$
+2. Normalizes the temperature gradient to get vector field $X$
+3. Solves Poisson equation $\Delta \phi = \nabla\cdot X$
+4. $\phi$ approximates geodesic distance; follow its gradient to extract a path
 
-The path is then recovered by parent pointers.
+### 3) Analytic Geodesics
 
-Implementation: [main.cpp](main.cpp)
-
-### 2) Analytic Geodesics (Parametric Surfaces)
-
-The analytic solver in [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp) uses closed‑form or ODE solutions for special surfaces:
-
-#### Plane
-
-Geodesic is a straight line:
-$$\gamma(t)=(1-t)p_0 + t p_1$$
-
-#### Sphere
-
-Geodesic is a great‑circle arc. Let $\hat a,\hat b$ be unit vectors and $\theta=\arccos(\hat a\cdot \hat b)$. Then:
-$$\gamma(t)=\frac{\sin((1-t)\theta)}{\sin\theta}\hat a + \frac{\sin(t\theta)}{\sin\theta}\hat b$$
-
-#### Torus / Saddle (Numerical Geodesics)
-
-For torus and saddle, we integrate the geodesic ODE in parameter coordinates $(u,v)$ using a shooting method + RK4:
-
-$$
-\frac{d^2 x^k}{dt^2} + \sum_{i,j}\Gamma^k_{ij}\frac{dx^i}{dt}\frac{dx^j}{dt} = 0
-$$
-
-where the Christoffel symbols $\Gamma^k_{ij}$ are derived from the surface metric.
-
-Implementation: [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp)
-
-## Current Limitations
-
-### No Analytic Geodesics on Arbitrary Meshes
-
-The analytic solver only works for a small set of parametric surfaces. It does **not** compute geodesics on irregular meshes like the Stanford bunny.
-
-### Why the Heat Method Is Needed
-
-For general triangle meshes, the standard approach is the **Heat Method** (see [1]).
-
-The idea:
-
-1. Solve the heat equation for a short time $t$.
-2. Normalize the temperature gradient to get a vector field $X$.
-3. Solve a Poisson equation $\Delta \phi = \nabla\cdot X$.
-4. $\phi$ approximates geodesic distance; follow its gradient to extract a path.
-
-This method is fast, robust, and works on **any** triangle mesh, which is why it’s the right next step for bunny and other irregular models.
-
-## Project Files (Key Pieces)
-
-- C++ engine: [main.cpp](main.cpp)
-- Analytic service: [src/analytics/analytic_service.cpp](src/analytics/analytic_service.cpp)
-- Analytic curve helpers: [src/analytics/analytic_surface_curves.cpp](src/analytics/analytic_surface_curves.cpp)
-- Analytic normalization helpers: [src/analytics/analytic_normalization.cpp](src/analytics/analytic_normalization.cpp)
-- Analytic string helpers: [src/analytics/analytic_string_utils.cpp](src/analytics/analytic_string_utils.cpp)
-- Go API server: [backend/main.go](backend/main.go)
-- React + Three.js UI: [frontend/src/App.tsx](frontend/src/App.tsx)
-- Renderer: [frontend/components/GeodesicMesh.tsx](frontend/components/GeodesicMesh.tsx)
+Closed-form or ODE solutions for special parametric surfaces (plane, sphere, torus, saddle).
 
 ## References
 

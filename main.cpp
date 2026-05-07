@@ -40,9 +40,9 @@ int main(int argc, char *argv[]) {
 		std::cerr << "Usage: ./main <start_id> <end_id> <model_path> [mode]"
 		          << std::endl;
 		std::cerr
-		    << "  mode: analytics (writes ./frontend/public/analytics.json)"
+		    << "  mode: analytics (writes ./analytics.json)"
 		    << std::endl;
-		std::cerr << "  mode: heat (writes ./frontend/public/heat_result.json)"
+		std::cerr << "  mode: heat (writes ./heat_result.json)"
 		          << std::endl;
 		return 1;
 	}
@@ -53,14 +53,14 @@ int main(int argc, char *argv[]) {
 	std::string mode = (argc >= 5) ? std::string(argv[4]) : std::string();
 
 	MeshEngine engine;
-	// std::string fileName = "./frontend/public/data/icosahedron.obj";
+	// std::string fileName = "./assets/models/icosahedron.obj";
 
 	if (!engine.loadOBJ(fileName)) {
 		std::cerr << "Error: Could not find " << fileName << std::endl;
 		return 1;
 	}
 
-	std::string outputPath = "./frontend/public/";
+	std::string outputPath = "./";
 	std::string inputFileName = fileName;
 
 

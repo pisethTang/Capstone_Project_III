@@ -38,3 +38,7 @@ https://20k.github.io/c++/2024/05/31/schwarzschild.html#step-1-the-metric-tensor
 # 
 https://github.com/pichiliani/ModelsOBJ
 https://github.com/f3d-app/f3d
+
+
+Debugging c++ code
+https://www.youtube.com/watch?v=2VokW_Jt0oM

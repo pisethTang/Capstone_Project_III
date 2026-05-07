@@ -1,11 +1,11 @@
 # Mesh Generator
 
-Generates higher-resolution OBJ meshes for the frontend `public/data` folder.
+Generates higher-resolution OBJ meshes for the `assets/models` folder.
 
 ## Usage
 
 ```sh
-python -m tools.meshgen.generate --out ./frontend/public/data
+python -m tools.meshgen.generate --out ./assets/models
 ```
 
 ## Parameters
