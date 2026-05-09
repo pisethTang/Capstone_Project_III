@@ -4,6 +4,7 @@ build/
 build-engine/
 build-tests/
 build-tests-verify/
+build-debug/
 
 # build artifacts
 /main
