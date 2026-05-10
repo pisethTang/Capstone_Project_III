@@ -34,6 +34,7 @@ set(GEODESIC_ENGINE_SOURCES
 	src/io/obj_loader.cpp
 	src/io/result_json_writer.cpp
 	src/mesh/adjacency_builder.cpp
+	src/mesh/mesh_engine.cpp
 )
 
 add_executable(geodesic_engine
@@ -44,6 +45,7 @@ add_executable(geodesic_engine
 target_include_directories(geodesic_engine
 	PRIVATE
 		"${GEODESIC_EIGEN_DIR}"
+		"${CMAKE_SOURCE_DIR}/include"
 )
 
 set_target_properties(geodesic_engine PROPERTIES

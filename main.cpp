@@ -16,24 +16,9 @@
 #include "include/geodesic_lab/io/result_json_writer.hpp"
 #include "include/geodesic_lab/mesh/adjacency_builder.hpp"
 #include "include/geodesic_lab/mesh/mesh.hpp"
-
-// Main class
-class MeshEngine {
-  public:
-	Mesh mesh;
-
-	bool loadOBJ(const std::string &filename) {
-		return loadOBJIntoMesh(
-		    filename, mesh,
-		    [this](int v1_idx, int v2_idx) {
-			    addUndirectedEdge(mesh, v1_idx, v2_idx);
-		    });
-	}
-};
+#include "include/geodesic_lab/mesh/mesh_engine.hpp"
 
 int main(int argc, char *argv[]) {
-
-	
 	// accept cmd line arguments
 
 	if (argc < 4) {

@@ -7,8 +7,7 @@
 
 #include "../../include/geodesic_lab/types/vec3_ops.hpp"
 
-ObjNormalizeTransform
-computeNormalizeTransform(const std::vector<Vec3> &verts) {
+ObjNormalizeTransform computeNormalizeTransform(const std::vector<Vec3> &verts) {
 	ObjNormalizeTransform out;
 	if (verts.empty())
 		return out;

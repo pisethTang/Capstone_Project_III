@@ -14,6 +14,7 @@ double edgeDistance(const Vec3 &v1, const Vec3 &v2) {
 
 } // namespace
 
+// create an adjacency list of undirected graph
 void addUndirectedEdge(Mesh &mesh, int v1_idx, int v2_idx) {
 	const int maxIndex = std::max(v1_idx, v2_idx);
 	if (maxIndex >= 0 && mesh.graph.size() <= static_cast<size_t>(maxIndex)) {
