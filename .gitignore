@@ -16,3 +16,7 @@ backend/app
 
 
 .env*
+Make*
+CMake*
+*.out 
+*.cmake
