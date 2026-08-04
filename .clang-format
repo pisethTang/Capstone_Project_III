@@ -1,7 +1,0 @@
-Language: Cpp
-IndentWidth: 4
-TabWidth: 4
-UseTab: ForIndentation
-
-# Keep other defaults
-BasedOnStyle: llvm
