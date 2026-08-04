@@ -1,8 +1,0 @@
-{
-  "inputFileName": "/home/sething2002/Capstone_Project/Capstone_Project_III/frontend/public/data/icosahedron.obj",
-  "reachable": true,
-  "totalDistance": 3.15436,
-  "path": [0, 2, 6, 11],
-  "elapsedMs": 0.0038,
-  "allDistances": [0, 1.05145, 1.05145, 1.05146, 1.05145, 1.05145, 2.10291, 2.10292, 2.10292, 2.10291, 2.10291, 3.15436]
-}
